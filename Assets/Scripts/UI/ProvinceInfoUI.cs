@@ -97,6 +97,7 @@ private void ShowSelection(ProvinceSelection selection)
 {
     if (selection == null || selection.province == null)
     {
+        Hide();
         return;
     }
 
@@ -145,8 +146,19 @@ dailyManpowerLabel.text = "Daily Manpower: -";
         manpowerLabel.text = "Manpower: " + ownerCountry.manpower;
         provinceCountLabel.text = "Owned Provinces: " + ownerCountry.ProvinceCount;
         dailyIncomeLabel.text = "Daily Income: " + ownerCountry.dailyIncome;
-dailyManpowerLabel.text = "Daily Manpower: " + ownerCountry.dailyManpowerGain;
+dailyManpowerLabel.text = "Daily Manpower: " + ownerCountry.dailyManpowerGain;;
+panel.style.display = DisplayStyle.Flex;
 
 
     }
+
+    private void Hide()
+{
+    if (panel != null)
+    {
+        panel.style.display = DisplayStyle.None;
+    }
+}
+
+
 }

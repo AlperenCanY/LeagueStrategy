@@ -21,7 +21,7 @@ public class ArmyMapVisualManager : MonoBehaviour
         if (armyManager != null)
         {
             armyManager.OnArmyCreated += CreateMarkerForArmy;
-            armyManager.OnArmyMoved += UpdateMarkerPosition;
+            armyManager.OnArmyChanged += UpdateMarkerPosition;
         }
 
         if (selectionManager != null)
@@ -35,7 +35,7 @@ public class ArmyMapVisualManager : MonoBehaviour
         if (armyManager != null)
         {
             armyManager.OnArmyCreated -= CreateMarkerForArmy;
-            armyManager.OnArmyMoved -= UpdateMarkerPosition;
+            armyManager.OnArmyChanged -= UpdateMarkerPosition;
         }
 
         if (selectionManager != null)
@@ -48,15 +48,16 @@ public class ArmyMapVisualManager : MonoBehaviour
     {
         GameObject markerObject = new GameObject("Army_" + army.armyId);
 
-        markerObject.transform.position = provinceMapPicker.GetProvinceCenterWorldPosition(army.currentProvinceId);
+        markerObject.transform.position = GetArmyWorldPosition(army);
         markerObject.transform.localScale = Vector3.one * 0.35f;
 
         SpriteRenderer renderer = markerObject.AddComponent<SpriteRenderer>();
         renderer.sprite = markerSprite;
         renderer.sortingOrder = 30;
-BoxCollider2D collider = markerObject.AddComponent<BoxCollider2D>();
-collider.isTrigger = true;
-collider.size = new Vector2(1.4f, 1.4f);
+
+        BoxCollider2D collider = markerObject.AddComponent<BoxCollider2D>();
+        collider.isTrigger = true;
+        collider.size = new Vector2(1.4f, 1.4f);
 
         ArmyMarkerView markerView = markerObject.AddComponent<ArmyMarkerView>();
         markerView.Initialize(army, selectionManager);
@@ -69,23 +70,38 @@ collider.size = new Vector2(1.4f, 1.4f);
         if (!markersByArmyId.TryGetValue(army.armyId, out ArmyMarkerView marker))
             return;
 
-        marker.transform.position = provinceMapPicker.GetProvinceCenterWorldPosition(army.currentProvinceId);
+        marker.army = army;
+        marker.transform.position = GetArmyWorldPosition(army);
     }
 
-private void HandleArmySelected(ArmyData selectedArmy)
-{
-    foreach (ArmyMarkerView marker in markersByArmyId.Values)
+    private Vector3 GetArmyWorldPosition(ArmyData army)
     {
-        if (selectedArmy == null)
+        if (!army.isMoving)
         {
-            marker.SetSelected(false);
-            continue;
+            return provinceMapPicker.GetProvinceCenterWorldPosition(army.currentProvinceId);
         }
 
-        bool isSelected = marker.army.armyId == selectedArmy.armyId;
-        marker.SetSelected(isSelected);
+        Vector3 sourcePos = provinceMapPicker.GetProvinceCenterWorldPosition(army.sourceProvinceId);
+        Vector3 targetPos = provinceMapPicker.GetProvinceCenterWorldPosition(army.targetProvinceId);
+
+        return Vector3.Lerp(sourcePos, targetPos, army.MovementProgress);
     }
-}
+
+    private void HandleArmySelected(ArmyData selectedArmy)
+    {
+        foreach (ArmyMarkerView marker in markersByArmyId.Values)
+        {
+            if (selectedArmy == null)
+            {
+                marker.SetSelected(false);
+                continue;
+            }
+
+            bool isSelected = marker.army.armyId == selectedArmy.armyId;
+            marker.SetSelected(isSelected);
+        }
+    }
+
     private Sprite CreateMarkerSprite()
     {
         int size = 32;
@@ -123,4 +139,17 @@ private void HandleArmySelected(ArmyData selectedArmy)
             SpriteMeshType.FullRect
         );
     }
+private void Update()
+{
+    foreach (ArmyMarkerView marker in markersByArmyId.Values)
+    {
+        if (marker == null || marker.army == null)
+            continue;
+
+        if (!marker.army.isMoving)
+            continue;
+
+        marker.transform.position = GetArmyWorldPosition(marker.army);
+    }
+}
 }

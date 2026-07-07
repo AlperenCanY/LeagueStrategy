@@ -15,14 +15,25 @@ public class CountryMapOverlay : MonoBehaviour
     private Texture2D overlayTexture;
     private Color32[] provincePixels;
 
-    private void Start()
-    {
-        CreateOverlayRenderer();
-        CacheProvincePixels();
+private void Start()
+{
+    CreateOverlayRenderer();
+    CacheProvincePixels();
 
-        // CountryManager Start içinde ülke oluşturduğu için 1 frame bekliyoruz.
-        StartCoroutine(BuildOverlayNextFrame());
+    if (countryManager != null)
+    {
+        countryManager.OnProvinceOwnershipChanged += RebuildOverlay;
     }
+
+    StartCoroutine(BuildOverlayNextFrame());
+}
+private void OnDestroy()
+{
+    if (countryManager != null)
+    {
+        countryManager.OnProvinceOwnershipChanged -= RebuildOverlay;
+    }
+}
 
     private IEnumerator BuildOverlayNextFrame()
     {
@@ -125,4 +136,19 @@ Sprite overlaySprite = Sprite.Create(
     {
         return color.r * 65536 + color.g * 256 + color.b;
     }
+    private void OnEnable()
+{
+    if (countryManager != null)
+    {
+        countryManager.OnCountriesChanged += RebuildOverlay;
+    }
+}
+
+private void OnDisable()
+{
+    if (countryManager != null)
+    {
+        countryManager.OnCountriesChanged -= RebuildOverlay;
+    }
+}
 }

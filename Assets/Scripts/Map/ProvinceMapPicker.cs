@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class ProvinceMapPicker : MonoBehaviour
 {
@@ -6,7 +7,8 @@ public class ProvinceMapPicker : MonoBehaviour
     public SpriteRenderer mapRenderer;
     public Texture2D provinceMapTexture;
     public ProvinceManager provinceManager;
-
+private Dictionary<int, Vector3> cachedProvinceCenters = new Dictionary<int, Vector3>();
+private Color32[] cachedPixels;
     [Header("Debug")]
     public bool logClickedColor = false;
 
@@ -88,16 +90,28 @@ public class ProvinceMapPicker : MonoBehaviour
     {
         return color.r * 65536 + color.g * 256 + color.b;
     }
-    public Vector3 GetProvinceCenterWorldPosition(int provinceId)
+public Vector3 GetProvinceCenterWorldPosition(int provinceId)
+{
+    if (cachedProvinceCenters.TryGetValue(provinceId, out Vector3 cachedPosition))
+        return cachedPosition;
+
+    Vector3 calculatedPosition = CalculateProvinceCenterWorldPosition(provinceId);
+    cachedProvinceCenters[provinceId] = calculatedPosition;
+
+    return calculatedPosition;
+}
+
+private Vector3 CalculateProvinceCenterWorldPosition(int provinceId)
 {
     int width = provinceMapTexture.width;
     int height = provinceMapTexture.height;
 
+    if (cachedPixels == null)
+        cachedPixels = provinceMapTexture.GetPixels32();
+
     long sumX = 0;
     long sumY = 0;
     int count = 0;
-
-    Color32[] pixels = provinceMapTexture.GetPixels32();
 
     for (int y = 0; y < height; y++)
     {
@@ -106,7 +120,7 @@ public class ProvinceMapPicker : MonoBehaviour
         for (int x = 0; x < width; x++)
         {
             int index = row + x;
-            int currentId = ColorToProvinceId(pixels[index]);
+            int currentId = ColorToProvinceId(cachedPixels[index]);
 
             if (currentId == provinceId)
             {
