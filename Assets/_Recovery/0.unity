@@ -188,6 +188,77 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &146668996
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 146668999}
+  - component: {fileID: 146668998}
+  - component: {fileID: 146668997}
+  m_Layer: 5
+  m_Name: TopBarUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &146668997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 146668996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 858ef66b96d1f05478501a2633c451bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TopBarUI
+  timeManager: {fileID: 1553334995}
+  countryManager: {fileID: 1553334992}
+  playerState: {fileID: 1553334997}
+--- !u!114 &146668998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 146668996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: caf6639df23725d4f868b702e09854b6, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &146668999
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 146668996}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -470,6 +541,15 @@ GameObject:
   - component: {fileID: 1553334995}
   - component: {fileID: 1553334994}
   - component: {fileID: 1553334996}
+  - component: {fileID: 1553334997}
+  - component: {fileID: 1553334998}
+  - component: {fileID: 1553335000}
+  - component: {fileID: 1553334999}
+  - component: {fileID: 1553335001}
+  - component: {fileID: 1553335005}
+  - component: {fileID: 1553335004}
+  - component: {fileID: 1553335003}
+  - component: {fileID: 1553335002}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -551,6 +631,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SelectionManager
   provinceManager: {fileID: 1553334990}
   countryManager: {fileID: 1553334992}
+  armyManager: {fileID: 0}
 --- !u!114 &1553334992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -631,6 +712,146 @@ MonoBehaviour:
   provinceManager: {fileID: 1553334990}
   countryManager: {fileID: 1553334992}
   overlayAlpha: 130
+--- !u!114 &1553334997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d3153122b308044dbeafe52154b0f55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerState
+  countryManager: {fileID: 1553334992}
+  playerCountryTag: TUR
+--- !u!114 &1553334998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7361ccb27f281ef4584a1ed615a157d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeInputController
+  timeManager: {fileID: 1553334995}
+--- !u!114 &1553334999
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 674e914a5fd54ea46b06748d942648ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMilitaryInputController
+  selectionManager: {fileID: 1553334991}
+  playerState: {fileID: 1553334997}
+  armyManager: {fileID: 1553335000}
+  provinceInfoUI: {fileID: 99212511}
+--- !u!114 &1553335000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 518e916d5242ca040ae343cf65a2f7bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmyManager
+  countryManager: {fileID: 1553334992}
+  provinceManager: {fileID: 1553334990}
+  recruitAmount: 1000
+  manpowerCost: 1000
+  moneyCost: 50
+--- !u!114 &1553335001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81e9d35bc9a126c4ca50bda6ab8f8dfc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerArmyCommandController
+  selectionManager: {fileID: 1553334991}
+  playerState: {fileID: 1553334997}
+  armyManager: {fileID: 1553335000}
+  provinceMapPicker: {fileID: 1553334993}
+--- !u!114 &1553335002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13d5578f0e11f7e4291b5f6a6208f726, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmyMapVisualManager
+  armyManager: {fileID: 1553335000}
+  selectionManager: {fileID: 1553334991}
+  provinceMapPicker: {fileID: 1553334993}
+--- !u!114 &1553335003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81e9d35bc9a126c4ca50bda6ab8f8dfc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerArmyCommandController
+  selectionManager: {fileID: 1553334991}
+  playerState: {fileID: 1553334997}
+  armyManager: {fileID: 1553335000}
+  provinceMapPicker: {fileID: 1553334993}
+--- !u!114 &1553335004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 674e914a5fd54ea46b06748d942648ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerMilitaryInputController
+  selectionManager: {fileID: 0}
+  playerState: {fileID: 0}
+  armyManager: {fileID: 0}
+  provinceInfoUI: {fileID: 0}
+--- !u!114 &1553335005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 518e916d5242ca040ae343cf65a2f7bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArmyManager
+  countryManager: {fileID: 1553334992}
+  provinceManager: {fileID: 1553334990}
+  recruitAmount: 1000
+  manpowerCost: 1000
+  moneyCost: 50
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -640,3 +861,4 @@ SceneRoots:
   - {fileID: 744801290}
   - {fileID: 1553334987}
   - {fileID: 99212513}
+  - {fileID: 146668999}
