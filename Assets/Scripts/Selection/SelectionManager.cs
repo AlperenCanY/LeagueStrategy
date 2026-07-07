@@ -15,12 +15,27 @@ public class SelectionManager : MonoBehaviour
 
     private void OnEnable()
     {
+        if (armyManager != null)
+    armyManager.OnArmyChanged += HandleArmyChanged;
         if (countryManager != null)
             countryManager.OnCountriesChanged += RefreshCurrentProvinceSelection;
     }
+    private void HandleArmyChanged(ArmyData army)
+{
+    if (CurrentArmySelection == null || army == null)
+        return;
+
+    if (CurrentArmySelection.armyId != army.armyId)
+        return;
+
+    CurrentArmySelection = army;
+    OnArmySelected?.Invoke(CurrentArmySelection);
+}
 
     private void OnDisable()
     {
+        if (armyManager != null)
+    armyManager.OnArmyChanged -= HandleArmyChanged;
         if (countryManager != null)
             countryManager.OnCountriesChanged -= RefreshCurrentProvinceSelection;
     }

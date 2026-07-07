@@ -6,18 +6,40 @@ public class ArmyManager : MonoBehaviour
 {
     public CountryManager countryManager;
     public ProvinceManager provinceManager;
+    public TimeManager timeManager;
 
     [Header("Recruitment")]
     public int recruitAmount = 1000;
     public int manpowerCost = 1000;
     public int moneyCost = 50;
 
+    [Header("Movement")]
+    public int defaultMovementDays = 5;
+
     private int nextArmyId = 1;
 
     private Dictionary<int, ArmyData> armiesById = new Dictionary<int, ArmyData>();
 
     public event Action<ArmyData> OnArmyCreated;
-    public event Action<ArmyData> OnArmyMoved;
+    public event Action<ArmyData> OnArmyChanged;
+    public event Action<ArmyData> OnArmyArrived;
+
+
+    private void OnEnable()
+    {
+        if (timeManager != null)
+        {
+            timeManager.OnDayPassed += HandleDayPassed;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (timeManager != null)
+        {
+            timeManager.OnDayPassed -= HandleDayPassed;
+        }
+    }
 
     public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
     {
@@ -73,11 +95,12 @@ public class ArmyManager : MonoBehaviour
         Debug.Log("Army oluşturuldu. ID: " + army.armyId + " / Province: " + province.shapeName);
 
         OnArmyCreated?.Invoke(army);
+        OnArmyChanged?.Invoke(army);
 
         return army;
     }
 
-    public bool MoveArmy(int armyId, int targetProvinceId)
+    public bool StartMoveArmy(int armyId, int targetProvinceId)
     {
         ArmyData army = GetArmy(armyId);
 
@@ -101,13 +124,60 @@ public class ArmyManager : MonoBehaviour
             return false;
         }
 
-        army.currentProvinceId = targetProvinceId;
+        if (army.isMoving)
+        {
+            Debug.Log("Army zaten hareket ediyor. Yeni hedef verildi.");
+        }
 
-        Debug.Log("Army " + army.armyId + " hedefe gitti: " + targetProvince.shapeName);
+        army.isMoving = true;
+        army.sourceProvinceId = army.currentProvinceId;
+        army.targetProvinceId = targetProvinceId;
+        army.movementDaysTotal = defaultMovementDays;
+        army.movementDaysRemaining = defaultMovementDays;
+        army.movementProgress = 0f;
 
-        OnArmyMoved?.Invoke(army);
+        Debug.Log("Army " + army.armyId + " hareket ediyor -> " + targetProvince.shapeName);
+
+        OnArmyChanged?.Invoke(army);
 
         return true;
+    }
+
+    private void HandleDayPassed(int day, int month, int year)
+    {
+        foreach (ArmyData army in armiesById.Values)
+        {
+            if (!army.isMoving)
+                continue;
+
+            army.movementDaysRemaining--;
+
+            if (army.movementDaysRemaining <= 0)
+            {
+                FinishMovement(army);
+            }
+            else
+            {
+                OnArmyChanged?.Invoke(army);
+            }
+        }
+    }
+
+    private void FinishMovement(ArmyData army)
+    {
+        army.currentProvinceId = army.targetProvinceId;
+        army.sourceProvinceId = army.currentProvinceId;
+
+        army.isMoving = false;
+        army.movementDaysTotal = 0;
+        army.movementDaysRemaining = 0;
+
+        ProvinceData province = provinceManager.GetProvinceById(army.currentProvinceId);
+
+        Debug.Log("Army " + army.armyId + " vardı: " + (province != null ? province.shapeName : "Unknown"));
+
+        OnArmyChanged?.Invoke(army);
+        OnArmyArrived?.Invoke(army);
     }
 
     public ArmyData GetArmy(int armyId)
@@ -120,4 +190,49 @@ public class ArmyManager : MonoBehaviour
     {
         return armiesById.Values;
     }
+
+    private void Update()
+{
+    TickArmyMovement();
+}
+
+private void TickArmyMovement()
+{
+    if (timeManager == null)
+        return;
+
+    if (timeManager.isPaused)
+        return;
+
+    foreach (ArmyData army in armiesById.Values)
+    {
+        if (!army.isMoving)
+            continue;
+
+        int oldRemainingDays = army.movementDaysRemaining;
+
+        float totalMoveSeconds = timeManager.secondsPerDay * army.movementDaysTotal;
+
+        if (totalMoveSeconds <= 0f)
+            totalMoveSeconds = 1f;
+
+        army.movementProgress += Time.deltaTime / totalMoveSeconds;
+        army.movementProgress = Mathf.Clamp01(army.movementProgress);
+
+        army.movementDaysRemaining = Mathf.CeilToInt(
+            (1f - army.movementProgress) * army.movementDaysTotal
+        );
+
+        if (army.movementProgress >= 1f)
+        {
+            FinishMovement(army);
+            continue;
+        }
+
+        if (army.movementDaysRemaining != oldRemainingDays)
+        {
+            OnArmyChanged?.Invoke(army);
+        }
+    }
+}
 }

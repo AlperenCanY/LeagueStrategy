@@ -6,12 +6,16 @@ public class CountryManager : MonoBehaviour
 {
     public ProvinceManager provinceManager;
 
+    public event Action OnProvinceOwnershipChanged;
+
     private Dictionary<string, CountryData> countriesByTag = new Dictionary<string, CountryData>();
 
     private void Start()
     {
         BuildCountriesFromProvinces();
     }
+
+    
 public event Action OnCountriesChanged;
     private void BuildCountriesFromProvinces()
     {
@@ -108,5 +112,45 @@ private Color32 GenerateColorFromTag(string tag)
     public void NotifyCountriesChanged()
 {
     OnCountriesChanged?.Invoke();
+}
+
+public void TransferProvince(ProvinceData province, string newOwnerTag)
+{
+    if (province == null)
+        return;
+
+    string oldOwnerTag = province.ownerCountry;
+
+    if (oldOwnerTag == newOwnerTag)
+        return;
+
+    CountryData oldOwner = GetCountry(oldOwnerTag);
+    CountryData newOwner = GetCountry(newOwnerTag);
+
+    if (oldOwner != null)
+    {
+        oldOwner.ownedProvinceIds.Remove(province.prov_id);
+    }
+
+    if (newOwner != null)
+    {
+        if (!newOwner.ownedProvinceIds.Contains(province.prov_id))
+        {
+            newOwner.ownedProvinceIds.Add(province.prov_id);
+        }
+    }
+
+    province.ownerCountry = newOwnerTag;
+
+    Debug.Log(province.shapeName + " province sahibi değişti: " + oldOwnerTag + " -> " + newOwnerTag);
+
+    NotifyCountriesChanged();
+    OnProvinceOwnershipChanged?.Invoke();
+    province.ownerCountry = newOwnerTag;
+
+Debug.Log(province.shapeName + " province sahibi değişti: " + oldOwnerTag + " -> " + newOwnerTag);
+
+NotifyCountriesChanged();
+OnProvinceOwnershipChanged?.Invoke();
 }
 }

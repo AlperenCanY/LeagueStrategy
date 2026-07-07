@@ -43,7 +43,7 @@ public class PlayerArmyCommandController : MonoBehaviour
             return;
         }
 
-        bool success = armyManager.MoveArmy(selectedArmy.armyId, targetProvinceId);
+        bool success = armyManager.StartMoveArmy(selectedArmy.armyId, targetProvinceId);
 
         if (success)
         {
