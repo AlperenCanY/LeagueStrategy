@@ -11,6 +11,11 @@ public class ProvinceInfoUI : MonoBehaviour
     private Label moneyLabel;
     private Label manpowerLabel;
     public event Action OnRecruitButtonClicked;
+    private Label populationLabel;
+private Label economyLabel;
+private Label infrastructureLabel;
+private Label supplyLabel;
+private Label terrainLabel;
 
 private Button recruitButton;
     private Label provinceCountLabel;
@@ -68,18 +73,28 @@ recruitButton.clicked += HandleRecruitClicked;
         dailyIncomeLabel = CreateLabel("Daily Income: -");
 dailyManpowerLabel = CreateLabel("Daily Manpower: -");
 troopsLabel = CreateLabel("Troops: -");
+populationLabel = CreateLabel("Population: -");
+economyLabel = CreateLabel("Economy: -");
+infrastructureLabel = CreateLabel("Infrastructure: -");
+supplyLabel = CreateLabel("Supply: -");
+terrainLabel = CreateLabel("Terrain: -");
 
         panel.Add(title);
-        panel.Add(provinceNameLabel);
-        panel.Add(ownerLabel);
-        panel.Add(tagLabel);
-        panel.Add(idLabel);
-        panel.Add(moneyLabel);
-        panel.Add(manpowerLabel);
-        panel.Add(provinceCountLabel);
+panel.Add(provinceNameLabel);
+panel.Add(ownerLabel);
+panel.Add(tagLabel);
+panel.Add(idLabel);
+panel.Add(populationLabel);
+panel.Add(economyLabel);
+panel.Add(infrastructureLabel);
+panel.Add(supplyLabel);
+panel.Add(terrainLabel);
+panel.Add(troopsLabel);
+panel.Add(moneyLabel);
+panel.Add(manpowerLabel);
+panel.Add(provinceCountLabel);
 panel.Add(dailyIncomeLabel);
 panel.Add(dailyManpowerLabel);
-panel.Add(troopsLabel);
 panel.Add(recruitButton);
         root.Add(panel);
 
@@ -129,6 +144,11 @@ private void OnDisable()
         idLabel.text = "ID: " + province.prov_id;
         tagLabel.text = "Tag: " + province.ownerCountry;
         troopsLabel.text = "Troops: " + province.stationedTroops;
+        populationLabel.text = "Population: " + province.population;
+economyLabel.text = "Economy: " + province.economyValue;
+infrastructureLabel.text = "Infrastructure: " + province.infrastructure;
+supplyLabel.text = "Supply: " + province.supplyLimit;
+terrainLabel.text = "Terrain: " + province.terrainType;
 
         if (ownerCountry == null)
         {
