@@ -33,70 +33,81 @@ public class ArmyManager : MonoBehaviour
         TickArmyMovement();
     }
 
-    public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
+   public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
+{
+    if (provinceManager == null || countryManager == null)
     {
-        if (provinceManager == null || countryManager == null)
-        {
-            Debug.LogError("ArmyManager bağlantıları eksik.");
-            return null;
-        }
-
-        ProvinceData province = provinceManager.GetProvinceById(provinceId);
-
-        if (province == null)
-        {
-            Debug.LogWarning("ArmyManager: Province bulunamadı. ID: " + provinceId);
-            return null;
-        }
-
-        if (province.ownerCountry != requesterCountryTag)
-        {
-            Debug.Log("Bu province sana ait değil.");
-            return null;
-        }
-
-        CountryData country = countryManager.GetCountry(requesterCountryTag);
-
-        if (country == null)
-        {
-            Debug.LogWarning("ArmyManager: Ülke bulunamadı. Tag: " + requesterCountryTag);
-            return null;
-        }
-
-        if (country.manpower < manpowerCost)
-        {
-            Debug.Log("Yetersiz manpower.");
-            return null;
-        }
-
-        if (country.money < moneyCost)
-        {
-            Debug.Log("Yetersiz para.");
-            return null;
-        }
-
-        country.manpower -= manpowerCost;
-        country.money -= moneyCost;
-
-        ArmyData army = new ArmyData(
-            nextArmyId,
-            requesterCountryTag,
-            provinceId,
-            recruitAmount
-        );
-
-        nextArmyId++;
-        armiesById[army.armyId] = army;
-
-        countryManager.NotifyCountriesChanged();
-
-        Debug.Log("Army oluşturuldu. ID: " + army.armyId + " / Province: " + province.shapeName);
-
-        OnArmyCreated?.Invoke(army);
-        OnArmyChanged?.Invoke(army);
-
-        return army;
+        Debug.LogError("ArmyManager bağlantıları eksik.");
+        return null;
     }
+
+    ProvinceData province = provinceManager.GetProvinceById(provinceId);
+
+    if (province == null)
+    {
+        Debug.LogWarning("ArmyManager: Province bulunamadı. ID: " + provinceId);
+        return null;
+    }
+
+    if (province.ownerCountry != requesterCountryTag)
+    {
+        Debug.Log("Bu province sana ait değil.");
+        return null;
+    }
+
+    CountryData country = countryManager.GetCountry(requesterCountryTag);
+
+    if (country == null)
+    {
+        Debug.LogWarning("ArmyManager: Ülke bulunamadı. Tag: " + requesterCountryTag);
+        return null;
+    }
+
+    if (province.recruitablePopulation < recruitAmount)
+    {
+        Debug.Log("Bu province içinde yeterli recruitable population yok.");
+        return null;
+    }
+
+    if (country.manpower < manpowerCost)
+    {
+        Debug.Log("Yetersiz manpower.");
+        return null;
+    }
+
+    if (country.money < moneyCost)
+    {
+        Debug.Log("Yetersiz para.");
+        return null;
+    }
+
+    country.manpower -= manpowerCost;
+    country.money -= moneyCost;
+    province.recruitablePopulation -= recruitAmount;
+
+    ArmyData army = new ArmyData(
+        nextArmyId,
+        requesterCountryTag,
+        provinceId,
+        recruitAmount
+    );
+
+    nextArmyId++;
+    armiesById[army.armyId] = army;
+
+    countryManager.NotifyCountriesChanged();
+
+    Debug.Log(
+        "Army oluşturuldu. ID: " + army.armyId +
+        " / Province: " + province.shapeName +
+        " / Troops: " + recruitAmount
+    );
+
+    OnArmyCreated?.Invoke(army);
+    OnArmyChanged?.Invoke(army);
+
+    return army;
+}
 
     public bool StartMoveArmy(int armyId, int targetProvinceId)
     {
