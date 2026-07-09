@@ -43,7 +43,7 @@ public class PlayerMilitaryInputController : MonoBehaviour
 
         ArmyData army = armyManager.RecruitArmy(
             selection.province.prov_id,
-            playerState.playerCountryTag
+            playerState.PlayerCountryTag
         );
 
         if (army != null)

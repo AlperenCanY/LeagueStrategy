@@ -1,11 +1,12 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 
 public class CountryManager : MonoBehaviour
 {
     public ProvinceManager provinceManager;
 
+    public event Action OnCountriesChanged;
     public event Action OnProvinceOwnershipChanged;
 
     private Dictionary<string, CountryData> countriesByTag = new Dictionary<string, CountryData>();
@@ -15,8 +16,6 @@ public class CountryManager : MonoBehaviour
         BuildCountriesFromProvinces();
     }
 
-    
-public event Action OnCountriesChanged;
     private void BuildCountriesFromProvinces()
     {
         if (provinceManager == null)
@@ -46,44 +45,45 @@ public event Action OnCountriesChanged;
                 countriesByTag[tag] = country;
             }
 
-            countriesByTag[tag].ownedProvinceIds.Add(province.prov_id);
+            if (!countriesByTag[tag].ownedProvinceIds.Contains(province.prov_id))
+                countriesByTag[tag].ownedProvinceIds.Add(province.prov_id);
         }
 
         Debug.Log("Ülke yüklendi: " + countriesByTag.Count);
 
         foreach (CountryData country in countriesByTag.Values)
-        {
             Debug.Log(country.tag + " / Province: " + country.ProvinceCount);
+    }
+
+    private Color32 GetCountryColorFromTag(string tag)
+    {
+        switch (tag)
+        {
+            case "TUR":
+                return new Color32(200, 40, 40, 130);
+
+            case "GRC":
+                return new Color32(40, 90, 220, 130);
+
+            case "BGR":
+                return new Color32(40, 170, 80, 130);
+
+            default:
+                return GenerateColorFromTag(tag);
         }
     }
-private Color32 GetCountryColorFromTag(string tag)
-{
-    switch (tag)
+
+    private Color32 GenerateColorFromTag(string tag)
     {
-        case "TUR":
-            return new Color32(200, 40, 40, 130);
+        int hash = tag.GetHashCode();
 
-        case "GRC":
-            return new Color32(40, 90, 220, 130);
+        byte r = (byte)(80 + Mathf.Abs(hash % 120));
+        byte g = (byte)(80 + Mathf.Abs((hash / 10) % 120));
+        byte b = (byte)(80 + Mathf.Abs((hash / 100) % 120));
 
-        case "BGR":
-            return new Color32(40, 170, 80, 130);
-
-        default:
-            return GenerateColorFromTag(tag);
+        return new Color32(r, g, b, 130);
     }
-}
 
-private Color32 GenerateColorFromTag(string tag)
-{
-    int hash = tag.GetHashCode();
-
-    byte r = (byte)(80 + Mathf.Abs(hash % 120));
-    byte g = (byte)(80 + Mathf.Abs((hash / 10) % 120));
-    byte b = (byte)(80 + Mathf.Abs((hash / 100) % 120));
-
-    return new Color32(r, g, b, 130);
-}
     private string GetCountryNameFromTag(string tag)
     {
         switch (tag)
@@ -109,48 +109,87 @@ private Color32 GenerateColorFromTag(string tag)
     {
         return countriesByTag.Values;
     }
+
     public void NotifyCountriesChanged()
-{
-    OnCountriesChanged?.Invoke();
-}
-
-public void TransferProvince(ProvinceData province, string newOwnerTag)
-{
-    if (province == null)
-        return;
-
-    string oldOwnerTag = province.ownerCountry;
-
-    if (oldOwnerTag == newOwnerTag)
-        return;
-
-    CountryData oldOwner = GetCountry(oldOwnerTag);
-    CountryData newOwner = GetCountry(newOwnerTag);
-
-    if (oldOwner != null)
     {
-        oldOwner.ownedProvinceIds.Remove(province.prov_id);
+        OnCountriesChanged?.Invoke();
     }
 
-    if (newOwner != null)
+    public void TransferProvince(ProvinceData province, string newOwnerTag)
     {
-        if (!newOwner.ownedProvinceIds.Contains(province.prov_id))
-        {
+        if (province == null)
+            return;
+
+        if (string.IsNullOrEmpty(newOwnerTag))
+            return;
+
+        string oldOwnerTag = province.ownerCountry;
+
+        if (oldOwnerTag == newOwnerTag)
+            return;
+
+        CountryData oldOwner = GetCountry(oldOwnerTag);
+        CountryData newOwner = GetCountry(newOwnerTag);
+
+        if (oldOwner != null)
+            oldOwner.ownedProvinceIds.Remove(province.prov_id);
+
+        if (newOwner != null && !newOwner.ownedProvinceIds.Contains(province.prov_id))
             newOwner.ownedProvinceIds.Add(province.prov_id);
-        }
+
+        province.ownerCountry = newOwnerTag;
+
+        Debug.Log(province.shapeName + " province sahibi değişti: " + oldOwnerTag + " -> " + newOwnerTag);
+
+        NotifyCountriesChanged();
+        OnProvinceOwnershipChanged?.Invoke();
     }
+    private void CalculateCountryStats()
+{
+    foreach (CountryData country in countries.Values)
+    {
+        country.totalPopulation = 0;
+        country.totalRecruitablePopulation = 0;
 
-    province.ownerCountry = newOwnerTag;
+        country.totalFood = 0;
+        country.totalSteel = 0;
+        country.totalCoal = 0;
+        country.totalOil = 0;
+        country.totalAluminium = 0;
+        country.totalChromium = 0;
+        country.totalTungsten = 0;
+        country.totalRubber = 0;
 
-    Debug.Log(province.shapeName + " province sahibi değişti: " + oldOwnerTag + " -> " + newOwnerTag);
+        country.civilianFactories = 0;
+        country.militaryFactories = 0;
+        country.dockyards = 0;
+        country.refineries = 0;
 
-    NotifyCountriesChanged();
-    OnProvinceOwnershipChanged?.Invoke();
-    province.ownerCountry = newOwnerTag;
+        foreach (ProvinceData province in country.provinces)
+        {
+            country.totalPopulation += province.population;
+            country.totalRecruitablePopulation += province.recruitablePopulation;
 
-Debug.Log(province.shapeName + " province sahibi değişti: " + oldOwnerTag + " -> " + newOwnerTag);
+            country.totalFood += province.food;
+            country.totalSteel += province.steel;
+            country.totalCoal += province.coal;
+            country.totalOil += province.oil;
+            country.totalAluminium += province.aluminium;
+            country.totalChromium += province.chromium;
+            country.totalTungsten += province.tungsten;
+            country.totalRubber += province.rubber;
 
-NotifyCountriesChanged();
-OnProvinceOwnershipChanged?.Invoke();
+            country.civilianFactories += province.civilianFactories;
+            country.militaryFactories += province.militaryFactories;
+            country.dockyards += province.dockyards;
+            country.refineries += province.refineries;
+        }
+
+        Debug.Log(
+            $"{country.countryTag} | Pop:{country.totalPopulation} | MP:{country.totalRecruitablePopulation} | " +
+            $"Food:{country.totalFood} Steel:{country.totalSteel} Oil:{country.totalOil} | " +
+            $"Civ:{country.civilianFactories} Mil:{country.militaryFactories}"
+        );
+    }
 }
 }

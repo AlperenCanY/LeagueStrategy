@@ -11,10 +11,12 @@ public class ProvinceManager : MonoBehaviour
     {
         LoadCsv();
     }
+    
+private void LoadCsv()
+{
+    Debug.Log("LoadCsv başladı");
 
-    private void LoadCsv()
-    {
-        if (provinceCsv == null)
+    if (provinceCsv == null)
         {
             Debug.LogError("Province CSV atanmadı.");
             return;
@@ -59,9 +61,32 @@ public class ProvinceManager : MonoBehaviour
             province.shapeName = GetValue(values, nameIndex);
             province.shapeGroup = GetValue(values, groupIndex);
             province.shapeID = GetValue(values, shapeIdIndex);
-            province.ownerCountry = province.shapeGroup;
+province.ownerCountry = province.shapeGroup;
 
-            provincesById[province.prov_id] = province;
+// TEST VERİLERİ
+province.population = Random.Range(50000, 500000);
+
+province.recruitablePopulation =
+    Mathf.RoundToInt(province.population * 0.20f);
+
+province.food = Random.Range(2, 15);
+province.steel = Random.Range(0, 8);
+province.coal = Random.Range(0, 8);
+province.oil = Random.Range(0, 5);
+province.aluminium = Random.Range(0, 4);
+province.chromium = Random.Range(0, 3);
+province.tungsten = Random.Range(0, 3);
+province.rubber = Random.Range(0, 2);
+
+province.civilianFactories = Random.Range(0, 3);
+province.militaryFactories = Random.Range(0, 2);
+province.dockyards = 0;
+province.refineries = 0;
+
+// Province'yi listeye ekle
+provincesById[province.prov_id] = province;
+
+Debug.Log("Province yüklendi: " + province.shapeName);
         }
 
         Debug.Log("Province yüklendi: " + provincesById.Count);

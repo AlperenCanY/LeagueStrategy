@@ -51,7 +51,33 @@ public class TopBarUI : MonoBehaviour
         topBar.Add(manpowerLabel);
         topBar.Add(speedLabel);
         topBar.Add(pauseLabel);
+Button turButton = new Button(() =>
+{
+    playerState.SetPlayerCountry("TUR");
+    Refresh();
+});
 
+turButton.text = "TUR";
+
+Button grcButton = new Button(() =>
+{
+    playerState.SetPlayerCountry("GRC");
+    Refresh();
+});
+
+grcButton.text = "GRC";
+
+Button bgrButton = new Button(() =>
+{
+    playerState.SetPlayerCountry("BGR");
+    Refresh();
+});
+
+bgrButton.text = "BGR";
+
+topBar.Add(turButton);
+topBar.Add(grcButton);
+topBar.Add(bgrButton);
         root.Add(topBar);
 
         if (timeManager != null)
@@ -59,8 +85,11 @@ public class TopBarUI : MonoBehaviour
             if (timeManager != null)
     timeManager.OnTimeStateChanged += Refresh;
 
-        if (countryManager != null)
-            countryManager.OnCountriesChanged += Refresh;
+       if (countryManager != null)
+    countryManager.OnCountriesChanged += Refresh;
+
+if (playerState != null)
+    playerState.OnPlayerCountryChanged += HandlePlayerCountryChanged;
 
         Refresh();
     }
@@ -72,6 +101,8 @@ public class TopBarUI : MonoBehaviour
 
         if (countryManager != null)
             countryManager.OnCountriesChanged -= Refresh;
+            if (playerState != null)
+    playerState.OnPlayerCountryChanged -= HandlePlayerCountryChanged;
             if (timeManager != null)
     timeManager.OnTimeStateChanged -= Refresh;
     }
@@ -116,4 +147,8 @@ public class TopBarUI : MonoBehaviour
         moneyLabel.text = "Money: " + playerCountry.money;
         manpowerLabel.text = "Manpower: " + playerCountry.manpower;
     }
+    private void HandlePlayerCountryChanged(string tag)
+{
+    Refresh();
+}
 }

@@ -1,34 +1,40 @@
-using UnityEngine;
+    using System;
+    using UnityEngine;
 
-public class PlayerState : MonoBehaviour
-{
-    public CountryManager countryManager;
-
-    [Header("Player")]
-    public string playerCountryTag = "TUR";
-
-    public CountryData PlayerCountry
+    public class PlayerState : MonoBehaviour
     {
-        get
-        {
-            if (countryManager == null)
-                return null;
+        [SerializeField]
+        private string playerCountryTag = "TUR";
 
-            return countryManager.GetCountry(playerCountryTag);
+        public string PlayerCountryTag => playerCountryTag;
+
+        public CountryData PlayerCountry
+        {
+            get
+            {
+                CountryManager countryManager = FindAnyObjectByType<CountryManager>();
+
+                if (countryManager == null)
+                    return null;
+
+                return countryManager.GetCountry(playerCountryTag);
+            }
+        }
+
+        public event Action<string> OnPlayerCountryChanged;
+
+        public void SetPlayerCountry(string newTag)
+        {
+            if (string.IsNullOrWhiteSpace(newTag))
+                return;
+
+            if (playerCountryTag == newTag)
+                return;
+
+            playerCountryTag = newTag;
+
+            Debug.Log("Aktif oyuncu ülkesi: " + playerCountryTag);
+
+            OnPlayerCountryChanged?.Invoke(playerCountryTag);
         }
     }
-
-    public bool IsPlayerProvince(ProvinceData province)
-    {
-        if (province == null)
-            return false;
-
-        return province.ownerCountry == playerCountryTag;
-    }
-
-    public void SetPlayerCountry(string tag)
-    {
-        playerCountryTag = tag;
-        Debug.Log("Oyuncu ülkesi seçildi: " + tag);
-    }
-}
