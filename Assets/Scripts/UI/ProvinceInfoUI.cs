@@ -15,6 +15,9 @@ public class ProvinceInfoUI : MonoBehaviour
     private Label ownerLabel;
     private Label tagLabel;
     private Label idLabel;
+    public PlayerState playerState;
+public ArmyManager armyManager;
+private Label recruitStatusLabel;
 
     private Label populationLabel;
     private Label recruitablePopulationLabel;
@@ -83,6 +86,7 @@ public class ProvinceInfoUI : MonoBehaviour
         controlLabel = CreateLabel("Control: -");
 
         troopsLabel = CreateLabel("Troops: -");
+        recruitStatusLabel = CreateLabel("Recruit: -");
 
         moneyLabel = CreateLabel("Money: -");
         manpowerLabel = CreateLabel("Manpower: -");
@@ -126,7 +130,8 @@ public class ProvinceInfoUI : MonoBehaviour
         panel.Add(dailyIncomeLabel);
         panel.Add(dailyManpowerLabel);
 
-        panel.Add(recruitButton);
+        panel.Add(recruitStatusLabel);
+panel.Add(recruitButton);
 
         root.Add(panel);
     }
@@ -269,6 +274,7 @@ public class ProvinceInfoUI : MonoBehaviour
             $"Control: Resistance {province.resistance}% | Compliance {province.compliance}%";
 
         troopsLabel.text = $"Troops: {province.stationedTroops}";
+        UpdateRecruitButton(province);
     }
 
     private void UpdateCountryLabels(CountryData ownerCountry)
@@ -299,7 +305,49 @@ public class ProvinceInfoUI : MonoBehaviour
             panel.style.display = DisplayStyle.Flex;
         }
     }
+private void UpdateRecruitButton(ProvinceData province)
+{
+    if (recruitButton == null || recruitStatusLabel == null)
+        return;
 
+    if (province == null)
+    {
+        recruitButton.SetEnabled(false);
+        recruitStatusLabel.text = "Recruit: -";
+        return;
+    }
+
+    if (armyManager == null || playerState == null)
+    {
+        recruitButton.SetEnabled(true);
+        recruitStatusLabel.text = "Recruit: System not linked";
+        return;
+    }
+
+    string playerTag = playerState.PlayerCountryTag;
+
+    bool canRecruit = armyManager.CanRecruitArmy(
+        province.prov_id,
+        playerTag,
+        out string reason
+    );
+
+    recruitButton.text =
+        "Recruit " + armyManager.recruitAmount +
+        " | $" + armyManager.moneyCost +
+        " | MP " + armyManager.manpowerCost;
+
+    recruitButton.SetEnabled(canRecruit);
+
+    if (canRecruit)
+    {
+        recruitStatusLabel.text = "Recruit: Ready";
+    }
+    else
+    {
+        recruitStatusLabel.text = "Recruit: " + reason;
+    }
+}
     private void Hide()
     {
         if (panel != null)

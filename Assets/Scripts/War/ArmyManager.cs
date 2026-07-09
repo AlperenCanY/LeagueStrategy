@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ArmyManager : MonoBehaviour
 {
+    [Header("References")]
     public CountryManager countryManager;
     public ProvinceManager provinceManager;
     public TimeManager timeManager;
@@ -18,10 +19,10 @@ public class ArmyManager : MonoBehaviour
 
     private int nextArmyId = 1;
 
-    private Dictionary<int, ArmyData> armiesById = new Dictionary<int, ArmyData>();
+    private readonly Dictionary<int, ArmyData> armiesById = new Dictionary<int, ArmyData>();
 
-    private List<ArmyData> tickBuffer = new List<ArmyData>();
-    private List<ArmyData> arrivedBuffer = new List<ArmyData>();
+    private readonly List<ArmyData> tickBuffer = new List<ArmyData>();
+    private readonly List<ArmyData> arrivedBuffer = new List<ArmyData>();
 
     public event Action<ArmyData> OnArmyCreated;
     public event Action<ArmyData> OnArmyChanged;
@@ -33,84 +34,130 @@ public class ArmyManager : MonoBehaviour
         TickArmyMovement();
     }
 
-   public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
-{
-    if (provinceManager == null || countryManager == null)
+    // =========================
+    // Recruitment
+    // =========================
+
+    public bool CanRecruitArmy(int provinceId, string requesterCountryTag, out string reason)
     {
-        Debug.LogError("ArmyManager bağlantıları eksik.");
-        return null;
+        reason = "";
+
+        if (provinceManager == null || countryManager == null)
+        {
+            reason = "System missing";
+            return false;
+        }
+
+        ProvinceData province = provinceManager.GetProvinceById(provinceId);
+
+        if (province == null)
+        {
+            reason = "Province not found";
+            return false;
+        }
+
+        if (province.ownerCountry != requesterCountryTag)
+        {
+            reason = "Not your province";
+            return false;
+        }
+
+        CountryData country = countryManager.GetCountry(requesterCountryTag);
+
+        if (country == null)
+        {
+            reason = "Country not found";
+            return false;
+        }
+
+        if (province.recruitablePopulation < recruitAmount)
+        {
+            reason = "Low recruitable population";
+            return false;
+        }
+
+        if (country.manpower < manpowerCost)
+        {
+            reason = "Low manpower";
+            return false;
+        }
+
+        if (country.money < moneyCost)
+        {
+            reason = "Low money";
+            return false;
+        }
+
+        reason = "Ready";
+        return true;
     }
 
-    ProvinceData province = provinceManager.GetProvinceById(provinceId);
-
-    if (province == null)
+    public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
     {
-        Debug.LogWarning("ArmyManager: Province bulunamadı. ID: " + provinceId);
-        return null;
+        if (!CanRecruitArmy(provinceId, requesterCountryTag, out string reason))
+        {
+            Debug.Log("Recruit başarısız: " + reason);
+            return null;
+        }
+
+        ProvinceData province = provinceManager.GetProvinceById(provinceId);
+        CountryData country = countryManager.GetCountry(requesterCountryTag);
+
+        if (province == null || country == null)
+        {
+            Debug.LogError("ArmyManager: Recruit sırasında province veya country null geldi.");
+            return null;
+        }
+
+        country.manpower -= manpowerCost;
+        country.money -= moneyCost;
+        province.recruitablePopulation -= recruitAmount;
+
+        ArmyData army = CreateArmy(requesterCountryTag, provinceId, recruitAmount);
+
+        countryManager.NotifyCountriesChanged();
+
+        Debug.Log(
+            "Army oluşturuldu. ID: " + army.armyId +
+            " / Province: " + province.shapeName +
+            " / Troops: " + recruitAmount +
+            " / Cost: $" + moneyCost +
+            " / Manpower: " + manpowerCost
+        );
+
+        OnArmyCreated?.Invoke(army);
+        OnArmyChanged?.Invoke(army);
+
+        return army;
     }
 
-    if (province.ownerCountry != requesterCountryTag)
+    private ArmyData CreateArmy(string ownerCountryTag, int provinceId, int troopCount)
     {
-        Debug.Log("Bu province sana ait değil.");
-        return null;
+        ArmyData army = new ArmyData(
+            nextArmyId,
+            ownerCountryTag,
+            provinceId,
+            troopCount
+        );
+
+        nextArmyId++;
+        armiesById[army.armyId] = army;
+
+        return army;
     }
 
-    CountryData country = countryManager.GetCountry(requesterCountryTag);
-
-    if (country == null)
-    {
-        Debug.LogWarning("ArmyManager: Ülke bulunamadı. Tag: " + requesterCountryTag);
-        return null;
-    }
-
-    if (province.recruitablePopulation < recruitAmount)
-    {
-        Debug.Log("Bu province içinde yeterli recruitable population yok.");
-        return null;
-    }
-
-    if (country.manpower < manpowerCost)
-    {
-        Debug.Log("Yetersiz manpower.");
-        return null;
-    }
-
-    if (country.money < moneyCost)
-    {
-        Debug.Log("Yetersiz para.");
-        return null;
-    }
-
-    country.manpower -= manpowerCost;
-    country.money -= moneyCost;
-    province.recruitablePopulation -= recruitAmount;
-
-    ArmyData army = new ArmyData(
-        nextArmyId,
-        requesterCountryTag,
-        provinceId,
-        recruitAmount
-    );
-
-    nextArmyId++;
-    armiesById[army.armyId] = army;
-
-    countryManager.NotifyCountriesChanged();
-
-    Debug.Log(
-        "Army oluşturuldu. ID: " + army.armyId +
-        " / Province: " + province.shapeName +
-        " / Troops: " + recruitAmount
-    );
-
-    OnArmyCreated?.Invoke(army);
-    OnArmyChanged?.Invoke(army);
-
-    return army;
-}
+    // =========================
+    // Movement
+    // =========================
 
     public bool StartMoveArmy(int armyId, int targetProvinceId)
     {
+        if (provinceManager == null)
+        {
+            Debug.LogError("ArmyManager: ProvinceManager atanmadı.");
+            return false;
+        }
+
         ArmyData army = GetArmy(armyId);
 
         if (army == null)
@@ -119,11 +166,17 @@ public class ArmyManager : MonoBehaviour
             return false;
         }
 
+        if (army.isMoving)
+        {
+            Debug.Log("Army zaten hareket ediyor.");
+            return false;
+        }
+
         ProvinceData targetProvince = provinceManager.GetProvinceById(targetProvinceId);
 
         if (targetProvince == null)
         {
-            Debug.LogWarning("ArmyManager: Hedef province bulunamadı.");
+            Debug.LogWarning("ArmyManager: Hedef province bulunamadı. ID: " + targetProvinceId);
             return false;
         }
 
@@ -133,6 +186,17 @@ public class ArmyManager : MonoBehaviour
             return false;
         }
 
+        StartMovement(army, targetProvinceId);
+
+        Debug.Log("Army " + army.armyId + " hareket ediyor -> " + targetProvince.shapeName);
+
+        OnArmyChanged?.Invoke(army);
+
+        return true;
+    }
+
+    private void StartMovement(ArmyData army, int targetProvinceId)
+    {
         int moveDays = Mathf.Max(1, defaultMovementDays);
 
         army.isMoving = true;
@@ -141,12 +205,6 @@ public class ArmyManager : MonoBehaviour
         army.movementDaysTotal = moveDays;
         army.movementDaysRemaining = moveDays;
         army.movementProgress = 0f;
-
-        Debug.Log("Army " + army.armyId + " hareket ediyor -> " + targetProvince.shapeName);
-
-        OnArmyChanged?.Invoke(army);
-
-        return true;
     }
 
     private void TickArmyMovement()
@@ -161,7 +219,9 @@ public class ArmyManager : MonoBehaviour
         arrivedBuffer.Clear();
 
         foreach (ArmyData army in armiesById.Values)
+        {
             tickBuffer.Add(army);
+        }
 
         foreach (ArmyData army in tickBuffer)
         {
@@ -174,29 +234,67 @@ public class ArmyManager : MonoBehaviour
             if (!army.isMoving)
                 continue;
 
-            int oldRemainingDays = army.movementDaysRemaining;
-
-            float totalMoveSeconds = Mathf.Max(0.01f, timeManager.secondsPerDay * army.movementDaysTotal);
-
-            army.movementProgress += Time.deltaTime / totalMoveSeconds;
-            army.movementProgress = Mathf.Clamp01(army.movementProgress);
-
-            army.movementDaysRemaining = Mathf.Max(
-                0,
-                Mathf.CeilToInt((1f - army.movementProgress) * army.movementDaysTotal)
-            );
-
-            if (army.movementProgress >= 1f)
-            {
-                FinishMovement(army);
-                arrivedBuffer.Add(army);
-                continue;
-            }
-
-            if (army.movementDaysRemaining != oldRemainingDays)
-                OnArmyChanged?.Invoke(army);
+            TickSingleArmyMovement(army);
         }
 
+        FireArrivedEvents();
+    }
+
+    private void TickSingleArmyMovement(ArmyData army)
+    {
+        int oldRemainingDays = army.movementDaysRemaining;
+
+        float totalMoveSeconds = Mathf.Max(
+            0.01f,
+            timeManager.secondsPerDay * army.movementDaysTotal
+        );
+
+        army.movementProgress += Time.deltaTime / totalMoveSeconds;
+        army.movementProgress = Mathf.Clamp01(army.movementProgress);
+
+        army.movementDaysRemaining = Mathf.Max(
+            0,
+            Mathf.CeilToInt((1f - army.movementProgress) * army.movementDaysTotal)
+        );
+
+        if (army.movementProgress >= 1f)
+        {
+            FinishMovement(army);
+            arrivedBuffer.Add(army);
+            return;
+        }
+
+        if (army.movementDaysRemaining != oldRemainingDays)
+        {
+            OnArmyChanged?.Invoke(army);
+        }
+    }
+
+    private void FinishMovement(ArmyData army)
+    {
+        army.currentProvinceId = army.targetProvinceId;
+        army.sourceProvinceId = army.currentProvinceId;
+        army.targetProvinceId = army.currentProvinceId;
+
+        army.isMoving = false;
+        army.movementDaysTotal = 0;
+        army.movementDaysRemaining = 0;
+        army.movementProgress = 1f;
+
+        ProvinceData province = provinceManager != null
+            ? provinceManager.GetProvinceById(army.currentProvinceId)
+            : null;
+
+        Debug.Log(
+            "Army " + army.armyId +
+            " vardı: " + (province != null ? province.shapeName : "Unknown")
+        );
+
+        OnArmyChanged?.Invoke(army);
+    }
+
+    private void FireArrivedEvents()
+    {
         foreach (ArmyData arrivedArmy in arrivedBuffer)
         {
             if (arrivedArmy == null)
@@ -209,21 +307,27 @@ public class ArmyManager : MonoBehaviour
         }
     }
 
-    private void FinishMovement(ArmyData army)
+    // =========================
+    // Army State
+    // =========================
+
+    public bool SetArmyTroopCount(int armyId, int newTroopCount)
     {
-        army.currentProvinceId = army.targetProvinceId;
-        army.sourceProvinceId = army.currentProvinceId;
+        ArmyData army = GetArmy(armyId);
 
-        army.isMoving = false;
-        army.movementDaysTotal = 0;
-        army.movementDaysRemaining = 0;
-        army.movementProgress = 1f;
+        if (army == null)
+            return false;
 
-        ProvinceData province = provinceManager.GetProvinceById(army.currentProvinceId);
+        army.troopCount = Mathf.Max(0, newTroopCount);
 
-        Debug.Log("Army " + army.armyId + " vardı: " + (province != null ? province.shapeName : "Unknown"));
+        if (army.troopCount <= 0)
+        {
+            DestroyArmy(armyId);
+            return true;
+        }
 
         OnArmyChanged?.Invoke(army);
+        return true;
     }
 
     public bool DestroyArmy(int armyId)
@@ -247,23 +351,19 @@ public class ArmyManager : MonoBehaviour
         return true;
     }
 
-    public bool SetArmyTroopCount(int armyId, int newTroopCount)
+    // =========================
+    // Queries
+    // =========================
+
+    public ArmyData GetArmy(int armyId)
     {
-        ArmyData army = GetArmy(armyId);
+        armiesById.TryGetValue(armyId, out ArmyData army);
+        return army;
+    }
 
-        if (army == null)
-            return false;
-
-        army.troopCount = Mathf.Max(0, newTroopCount);
-
-        if (army.troopCount <= 0)
-        {
-            DestroyArmy(armyId);
-            return true;
-        }
-
-        OnArmyChanged?.Invoke(army);
-        return true;
+    public IEnumerable<ArmyData> GetAllArmies()
+    {
+        return armiesById.Values;
     }
 
     public ArmyData GetFirstEnemyArmyInProvince(int provinceId, string requesterCountryTag)
@@ -289,16 +389,5 @@ public class ArmyManager : MonoBehaviour
         }
 
         return null;
-    }
-
-    public ArmyData GetArmy(int armyId)
-    {
-        armiesById.TryGetValue(armyId, out ArmyData army);
-        return army;
-    }
-
-    public IEnumerable<ArmyData> GetAllArmies()
-    {
-        return armiesById.Values;
     }
 }
