@@ -22,12 +22,11 @@ public class ArmyMapVisualManager : MonoBehaviour
         {
             armyManager.OnArmyCreated += CreateMarkerForArmy;
             armyManager.OnArmyChanged += UpdateMarkerPosition;
+            armyManager.OnArmyDestroyed += RemoveMarkerForArmy;
         }
 
         if (selectionManager != null)
-        {
             selectionManager.OnArmySelected += HandleArmySelected;
-        }
     }
 
     private void OnDisable()
@@ -36,16 +35,32 @@ public class ArmyMapVisualManager : MonoBehaviour
         {
             armyManager.OnArmyCreated -= CreateMarkerForArmy;
             armyManager.OnArmyChanged -= UpdateMarkerPosition;
+            armyManager.OnArmyDestroyed -= RemoveMarkerForArmy;
         }
 
         if (selectionManager != null)
-        {
             selectionManager.OnArmySelected -= HandleArmySelected;
+    }
+
+    private void Update()
+    {
+        foreach (ArmyMarkerView marker in markersByArmyId.Values)
+        {
+            if (marker == null || marker.army == null)
+                continue;
+
+            if (!marker.army.isMoving)
+                continue;
+
+            marker.transform.position = GetArmyWorldPosition(marker.army);
         }
     }
 
     private void CreateMarkerForArmy(ArmyData army)
     {
+        if (army == null)
+            return;
+
         GameObject markerObject = new GameObject("Army_" + army.armyId);
 
         markerObject.transform.position = GetArmyWorldPosition(army);
@@ -67,19 +82,37 @@ public class ArmyMapVisualManager : MonoBehaviour
 
     private void UpdateMarkerPosition(ArmyData army)
     {
+        if (army == null)
+            return;
+
         if (!markersByArmyId.TryGetValue(army.armyId, out ArmyMarkerView marker))
+            return;
+
+        if (marker == null)
             return;
 
         marker.army = army;
         marker.transform.position = GetArmyWorldPosition(army);
     }
 
+    private void RemoveMarkerForArmy(ArmyData army)
+    {
+        if (army == null)
+            return;
+
+        if (!markersByArmyId.TryGetValue(army.armyId, out ArmyMarkerView marker))
+            return;
+
+        markersByArmyId.Remove(army.armyId);
+
+        if (marker != null)
+            Destroy(marker.gameObject);
+    }
+
     private Vector3 GetArmyWorldPosition(ArmyData army)
     {
         if (!army.isMoving)
-        {
             return provinceMapPicker.GetProvinceCenterWorldPosition(army.currentProvinceId);
-        }
 
         Vector3 sourcePos = provinceMapPicker.GetProvinceCenterWorldPosition(army.sourceProvinceId);
         Vector3 targetPos = provinceMapPicker.GetProvinceCenterWorldPosition(army.targetProvinceId);
@@ -91,13 +124,16 @@ public class ArmyMapVisualManager : MonoBehaviour
     {
         foreach (ArmyMarkerView marker in markersByArmyId.Values)
         {
+            if (marker == null)
+                continue;
+
             if (selectedArmy == null)
             {
                 marker.SetSelected(false);
                 continue;
             }
 
-            bool isSelected = marker.army.armyId == selectedArmy.armyId;
+            bool isSelected = marker.army != null && marker.army.armyId == selectedArmy.armyId;
             marker.SetSelected(isSelected);
         }
     }
@@ -139,17 +175,4 @@ public class ArmyMapVisualManager : MonoBehaviour
             SpriteMeshType.FullRect
         );
     }
-private void Update()
-{
-    foreach (ArmyMarkerView marker in markersByArmyId.Values)
-    {
-        if (marker == null || marker.army == null)
-            continue;
-
-        if (!marker.army.isMoving)
-            continue;
-
-        marker.transform.position = GetArmyWorldPosition(marker.army);
-    }
-}
 }

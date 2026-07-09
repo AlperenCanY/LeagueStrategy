@@ -15,25 +15,29 @@ public class CountryMapOverlay : MonoBehaviour
     private Texture2D overlayTexture;
     private Color32[] provincePixels;
 
-private void Start()
-{
-    CreateOverlayRenderer();
-    CacheProvincePixels();
+    private bool isInitialized;
 
-    if (countryManager != null)
+    private void OnEnable()
     {
-        countryManager.OnProvinceOwnershipChanged += RebuildOverlay;
+        if (countryManager != null)
+            countryManager.OnProvinceOwnershipChanged += RebuildOverlay;
     }
 
-    StartCoroutine(BuildOverlayNextFrame());
-}
-private void OnDestroy()
-{
-    if (countryManager != null)
+    private void OnDisable()
     {
-        countryManager.OnProvinceOwnershipChanged -= RebuildOverlay;
+        if (countryManager != null)
+            countryManager.OnProvinceOwnershipChanged -= RebuildOverlay;
     }
-}
+
+    private void Start()
+    {
+        CreateOverlayRenderer();
+        CacheProvincePixels();
+
+        isInitialized = true;
+
+        StartCoroutine(BuildOverlayNextFrame());
+    }
 
     private IEnumerator BuildOverlayNextFrame()
     {
@@ -60,11 +64,17 @@ private void OnDestroy()
 
     public void RebuildOverlay()
     {
-        if (provinceMapTexture == null || provinceManager == null || countryManager == null)
+        if (!isInitialized)
+            return;
+
+        if (provinceMapTexture == null || mapRenderer == null || provinceManager == null || countryManager == null)
         {
             Debug.LogError("CountryMapOverlay bağlantıları eksik.");
             return;
         }
+
+        if (overlayRenderer == null)
+            return;
 
         int width = provinceMapTexture.width;
         int height = provinceMapTexture.height;
@@ -103,25 +113,27 @@ private void OnDestroy()
             overlayPixels[i] = color;
         }
 
+        if (overlayTexture != null)
+            Destroy(overlayTexture);
+
         overlayTexture = new Texture2D(width, height, TextureFormat.RGBA32, false);
         overlayTexture.filterMode = FilterMode.Point;
         overlayTexture.wrapMode = TextureWrapMode.Clamp;
         overlayTexture.SetPixels32(overlayPixels);
         overlayTexture.Apply();
 
-        float overlayPixelsPerUnit = GetProvinceMapPixelsPerUnit();
+        Sprite overlaySprite = Sprite.Create(
+            overlayTexture,
+            new Rect(0, 0, width, height),
+            new Vector2(0.5f, 0.5f),
+            GetProvinceMapPixelsPerUnit(),
+            0,
+            SpriteMeshType.FullRect
+        );
 
-Sprite overlaySprite = Sprite.Create(
-    overlayTexture,
-    new Rect(0, 0, width, height),
-    new Vector2(0.5f, 0.5f),
-    overlayPixelsPerUnit,
-    0,
-    SpriteMeshType.FullRect
-);
         overlayRenderer.sprite = overlaySprite;
 
-        Debug.Log("Country map overlay oluşturuldu.");
+        Debug.Log("Country map overlay rebuild edildi.");
     }
 
     private float GetProvinceMapPixelsPerUnit()
@@ -136,19 +148,4 @@ Sprite overlaySprite = Sprite.Create(
     {
         return color.r * 65536 + color.g * 256 + color.b;
     }
-    private void OnEnable()
-{
-    if (countryManager != null)
-    {
-        countryManager.OnCountriesChanged += RebuildOverlay;
-    }
-}
-
-private void OnDisable()
-{
-    if (countryManager != null)
-    {
-        countryManager.OnCountriesChanged -= RebuildOverlay;
-    }
-}
 }

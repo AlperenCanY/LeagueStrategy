@@ -31,7 +31,7 @@ public class PlayerArmyCommandController : MonoBehaviour
             return;
         }
 
-        if (selectedArmy.ownerCountryTag != playerState.playerCountryTag)
+        if (selectedArmy.ownerCountryTag != playerState.PlayerCountryTag)
         {
             Debug.Log("Bu army sana ait değil.");
             return;

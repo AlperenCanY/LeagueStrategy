@@ -16,80 +16,75 @@ public class SelectionManager : MonoBehaviour
     private void OnEnable()
     {
         if (armyManager != null)
-    armyManager.OnArmyChanged += HandleArmyChanged;
+        {
+            armyManager.OnArmyChanged += HandleArmyChanged;
+            armyManager.OnArmyDestroyed += HandleArmyDestroyed;
+        }
+
         if (countryManager != null)
             countryManager.OnCountriesChanged += RefreshCurrentProvinceSelection;
     }
-    private void HandleArmyChanged(ArmyData army)
-{
-    if (CurrentArmySelection == null || army == null)
-        return;
-
-    if (CurrentArmySelection.armyId != army.armyId)
-        return;
-
-    CurrentArmySelection = army;
-    OnArmySelected?.Invoke(CurrentArmySelection);
-}
 
     private void OnDisable()
     {
         if (armyManager != null)
-    armyManager.OnArmyChanged -= HandleArmyChanged;
+        {
+            armyManager.OnArmyChanged -= HandleArmyChanged;
+            armyManager.OnArmyDestroyed -= HandleArmyDestroyed;
+        }
+
         if (countryManager != null)
             countryManager.OnCountriesChanged -= RefreshCurrentProvinceSelection;
     }
 
-public void SelectProvince(int provinceId)
-{
-    ProvinceData province = provinceManager.GetProvinceById(provinceId);
-
-    if (province == null)
+    public void SelectProvince(int provinceId)
     {
-        Debug.LogWarning("SelectionManager: Province bulunamadı. ID: " + provinceId);
-        return;
+        ProvinceData province = provinceManager.GetProvinceById(provinceId);
+
+        if (province == null)
+        {
+            Debug.LogWarning("SelectionManager: Province bulunamadı. ID: " + provinceId);
+            return;
+        }
+
+        CountryData ownerCountry = null;
+
+        if (countryManager != null)
+            ownerCountry = countryManager.GetCountry(province.ownerCountry);
+
+        CurrentArmySelection = null;
+        OnArmySelected?.Invoke(null);
+
+        CurrentProvinceSelection = new ProvinceSelection(province, ownerCountry);
+        OnProvinceSelected?.Invoke(CurrentProvinceSelection);
     }
 
-    CountryData ownerCountry = null;
-
-    if (countryManager != null)
-        ownerCountry = countryManager.GetCountry(province.ownerCountry);
-
-    // Army seçimini temizle
-    CurrentArmySelection = null;
-    OnArmySelected?.Invoke(null);
-
-    CurrentProvinceSelection = new ProvinceSelection(province, ownerCountry);
-
-    OnProvinceSelected?.Invoke(CurrentProvinceSelection);
-}
-
-public void SelectArmy(int armyId)
-{
-    if (armyManager == null)
+    public void SelectArmy(int armyId)
     {
-        Debug.LogError("SelectionManager: ArmyManager atanmadı.");
-        return;
+        if (armyManager == null)
+        {
+            Debug.LogError("SelectionManager: ArmyManager atanmadı.");
+            return;
+        }
+
+        ArmyData army = armyManager.GetArmy(armyId);
+
+        if (army == null)
+        {
+            Debug.LogWarning("SelectionManager: Army bulunamadı. ID: " + armyId);
+            ClearArmySelection();
+            return;
+        }
+
+        CurrentProvinceSelection = null;
+        OnProvinceSelected?.Invoke(null);
+
+        CurrentArmySelection = army;
+
+        Debug.Log("Army seçildi. ID: " + army.armyId + " / Troops: " + army.troopCount);
+
+        OnArmySelected?.Invoke(army);
     }
-
-    ArmyData army = armyManager.GetArmy(armyId);
-
-    if (army == null)
-    {
-        Debug.LogWarning("SelectionManager: Army bulunamadı. ID: " + armyId);
-        return;
-    }
-
-    // Province seçimini temizle
-    CurrentProvinceSelection = null;
-    OnProvinceSelected?.Invoke(null);
-
-    CurrentArmySelection = army;
-
-    Debug.Log("Army seçildi. ID: " + army.armyId + " / Troops: " + army.troopCount);
-
-    OnArmySelected?.Invoke(army);
-}
 
     public void RefreshCurrentProvinceSelection()
     {
@@ -113,6 +108,50 @@ public void SelectArmy(int armyId)
         if (CurrentArmySelection == null)
             return;
 
+        if (armyManager == null)
+        {
+            ClearArmySelection();
+            return;
+        }
+
+        ArmyData army = armyManager.GetArmy(CurrentArmySelection.armyId);
+
+        if (army == null)
+        {
+            ClearArmySelection();
+            return;
+        }
+
+        CurrentArmySelection = army;
         OnArmySelected?.Invoke(CurrentArmySelection);
+    }
+
+    private void HandleArmyChanged(ArmyData army)
+    {
+        if (CurrentArmySelection == null || army == null)
+            return;
+
+        if (CurrentArmySelection.armyId != army.armyId)
+            return;
+
+        CurrentArmySelection = army;
+        OnArmySelected?.Invoke(CurrentArmySelection);
+    }
+
+    private void HandleArmyDestroyed(ArmyData army)
+    {
+        if (CurrentArmySelection == null || army == null)
+            return;
+
+        if (CurrentArmySelection.armyId != army.armyId)
+            return;
+
+        ClearArmySelection();
+    }
+
+    private void ClearArmySelection()
+    {
+        CurrentArmySelection = null;
+        OnArmySelected?.Invoke(null);
     }
 }

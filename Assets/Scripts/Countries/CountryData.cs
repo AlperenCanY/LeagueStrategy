@@ -21,4 +21,21 @@ public class CountryData
     {
         get { return ownedProvinceIds.Count; }
     }
+    // TOPLAM DEĞERLER
+public int totalPopulation;
+public int totalRecruitablePopulation;
+
+public int totalFood;
+public int totalSteel;
+public int totalCoal;
+public int totalOil;
+public int totalAluminium;
+public int totalChromium;
+public int totalTungsten;
+public int totalRubber;
+
+public int civilianFactories;
+public int militaryFactories;
+public int dockyards;
+public int refineries;
 }
