@@ -9,6 +9,12 @@ public class ProvinceData
 
     public string ownerCountry;
 
+    public int population;
+    public int economyValue;
+    public int infrastructure;
+    public int supplyLimit;
+    public string terrainType;
+
     public int stationedTroops;
     [Header("Population")]
 public int population = 100000;
