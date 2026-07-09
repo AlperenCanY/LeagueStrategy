@@ -35,13 +35,7 @@ public class CountryManager : MonoBehaviour
 
             if (!countriesByTag.ContainsKey(tag))
             {
-                CountryData country = new CountryData();
-                country.tag = tag;
-                country.countryName = GetCountryNameFromTag(tag);
-                country.money = 1000;
-                country.manpower = 10000;
-                country.mapColor = GetCountryColorFromTag(tag);
-
+                CountryData country = CreateCountry(tag);
                 countriesByTag[tag] = country;
             }
 
@@ -49,10 +43,29 @@ public class CountryManager : MonoBehaviour
                 countriesByTag[tag].ownedProvinceIds.Add(province.prov_id);
         }
 
+        CalculateCountryStats();
+
         Debug.Log("Ülke yüklendi: " + countriesByTag.Count);
 
         foreach (CountryData country in countriesByTag.Values)
+        {
             Debug.Log(country.tag + " / Province: " + country.ProvinceCount);
+        }
+
+        NotifyCountriesChanged();
+    }
+
+    private CountryData CreateCountry(string tag)
+    {
+        CountryData country = new CountryData();
+
+        country.tag = tag;
+        country.countryName = GetCountryNameFromTag(tag);
+        country.money = 1000;
+        country.manpower = 10000;
+        country.mapColor = GetCountryColorFromTag(tag);
+
+        return country;
     }
 
     private Color32 GetCountryColorFromTag(string tag)
@@ -90,10 +103,13 @@ public class CountryManager : MonoBehaviour
         {
             case "TUR":
                 return "Türkiye";
+
             case "GRC":
                 return "Yunanistan";
+
             case "BGR":
                 return "Bulgaristan";
+
             default:
                 return tag;
         }
@@ -131,65 +147,82 @@ public class CountryManager : MonoBehaviour
         CountryData oldOwner = GetCountry(oldOwnerTag);
         CountryData newOwner = GetCountry(newOwnerTag);
 
+        if (newOwner == null)
+        {
+            newOwner = CreateCountry(newOwnerTag);
+            countriesByTag[newOwnerTag] = newOwner;
+        }
+
         if (oldOwner != null)
             oldOwner.ownedProvinceIds.Remove(province.prov_id);
 
-        if (newOwner != null && !newOwner.ownedProvinceIds.Contains(province.prov_id))
+        if (!newOwner.ownedProvinceIds.Contains(province.prov_id))
             newOwner.ownedProvinceIds.Add(province.prov_id);
 
         province.ownerCountry = newOwnerTag;
+
+        CalculateCountryStats();
 
         Debug.Log(province.shapeName + " province sahibi değişti: " + oldOwnerTag + " -> " + newOwnerTag);
 
         NotifyCountriesChanged();
         OnProvinceOwnershipChanged?.Invoke();
     }
+
     private void CalculateCountryStats()
-{
-    foreach (CountryData country in countries.Values)
     {
-        country.totalPopulation = 0;
-        country.totalRecruitablePopulation = 0;
+        if (provinceManager == null)
+            return;
 
-        country.totalFood = 0;
-        country.totalSteel = 0;
-        country.totalCoal = 0;
-        country.totalOil = 0;
-        country.totalAluminium = 0;
-        country.totalChromium = 0;
-        country.totalTungsten = 0;
-        country.totalRubber = 0;
-
-        country.civilianFactories = 0;
-        country.militaryFactories = 0;
-        country.dockyards = 0;
-        country.refineries = 0;
-
-        foreach (ProvinceData province in country.provinces)
+        foreach (CountryData country in countriesByTag.Values)
         {
-            country.totalPopulation += province.population;
-            country.totalRecruitablePopulation += province.recruitablePopulation;
+            country.totalPopulation = 0;
+            country.totalRecruitablePopulation = 0;
 
-            country.totalFood += province.food;
-            country.totalSteel += province.steel;
-            country.totalCoal += province.coal;
-            country.totalOil += province.oil;
-            country.totalAluminium += province.aluminium;
-            country.totalChromium += province.chromium;
-            country.totalTungsten += province.tungsten;
-            country.totalRubber += province.rubber;
+            country.totalFood = 0;
+            country.totalSteel = 0;
+            country.totalCoal = 0;
+            country.totalOil = 0;
+            country.totalAluminium = 0;
+            country.totalChromium = 0;
+            country.totalTungsten = 0;
+            country.totalRubber = 0;
 
-            country.civilianFactories += province.civilianFactories;
-            country.militaryFactories += province.militaryFactories;
-            country.dockyards += province.dockyards;
-            country.refineries += province.refineries;
+            country.civilianFactories = 0;
+            country.militaryFactories = 0;
+            country.dockyards = 0;
+            country.refineries = 0;
+
+            foreach (int provinceId in country.ownedProvinceIds)
+            {
+                ProvinceData province = provinceManager.GetProvinceById(provinceId);
+
+                if (province == null)
+                    continue;
+
+                country.totalPopulation += province.population;
+                country.totalRecruitablePopulation += province.recruitablePopulation;
+
+                country.totalFood += province.food;
+                country.totalSteel += province.steel;
+                country.totalCoal += province.coal;
+                country.totalOil += province.oil;
+                country.totalAluminium += province.aluminium;
+                country.totalChromium += province.chromium;
+                country.totalTungsten += province.tungsten;
+                country.totalRubber += province.rubber;
+
+                country.civilianFactories += province.civilianFactories;
+                country.militaryFactories += province.militaryFactories;
+                country.dockyards += province.dockyards;
+                country.refineries += province.refineries;
+            }
+
+            Debug.Log(
+                $"{country.tag} | Pop:{country.totalPopulation} | MP:{country.totalRecruitablePopulation} | " +
+                $"Food:{country.totalFood} Steel:{country.totalSteel} Oil:{country.totalOil} | " +
+                $"Civ:{country.civilianFactories} Mil:{country.militaryFactories}"
+            );
         }
-
-        Debug.Log(
-            $"{country.countryTag} | Pop:{country.totalPopulation} | MP:{country.totalRecruitablePopulation} | " +
-            $"Food:{country.totalFood} Steel:{country.totalSteel} Oil:{country.totalOil} | " +
-            $"Civ:{country.civilianFactories} Mil:{country.militaryFactories}"
-        );
     }
-}
 }
