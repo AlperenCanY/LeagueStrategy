@@ -66,10 +66,8 @@ public class CountryInfoUI : MonoBehaviour
 
         provinceCountLabel = CreateLabel("Provinces: -");
         populationLabel = CreateLabel("Population: -");
-        recruitablePopulationLabel = CreateLabel("Recruitable Population: -");
-
-        economyLabel = CreateLabel("Economy: -");
-        supplyLabel = CreateLabel("Supply: -");
+        economyLabel = CreateLabel("Economy Value: -");
+        supplyLabel = CreateLabel("Total Supply: -");
         infrastructureLabel = CreateLabel("Avg Infrastructure: -");
 
         resourcesLabel = CreateLabel("Resources: -");
@@ -88,7 +86,6 @@ public class CountryInfoUI : MonoBehaviour
         panel.Add(CreateSectionTitle("Population"));
         panel.Add(provinceCountLabel);
         panel.Add(populationLabel);
-        panel.Add(recruitablePopulationLabel);
 
         panel.Add(CreateSpacer(6));
         panel.Add(CreateSectionTitle("Province Power"));
@@ -113,9 +110,11 @@ public class CountryInfoUI : MonoBehaviour
         VisualElement element = new VisualElement();
 
         element.style.position = Position.Absolute;
-        element.style.left = 20;
-        element.style.top = 70;
-        element.style.width = 360;
+
+        // LeftSidebar butonlarının yanında açılsın
+        element.style.left = 78;
+        element.style.top = 54;
+        element.style.width = 370;
 
         element.style.paddingTop = 14;
         element.style.paddingBottom = 14;
@@ -144,7 +143,7 @@ public class CountryInfoUI : MonoBehaviour
         Label label = new Label(text);
 
         label.style.fontSize = 15;
-        label.style.color = new Color(1f, 0.82f, 0.35f);
+        label.style.color = new Color(1f, 0.78f, 0.28f);
         label.style.unityFontStyleAndWeight = FontStyle.Bold;
         label.style.marginTop = 2;
         label.style.marginBottom = 4;
@@ -178,6 +177,11 @@ public class CountryInfoUI : MonoBehaviour
             countryManager.OnCountriesChanged += Refresh;
             countryManager.OnProvinceOwnershipChanged += Refresh;
         }
+
+        if (playerState != null)
+        {
+            playerState.OnPlayerCountryChanged += HandlePlayerCountryChanged;
+        }
     }
 
     private void UnsubscribeEvents()
@@ -187,6 +191,16 @@ public class CountryInfoUI : MonoBehaviour
             countryManager.OnCountriesChanged -= Refresh;
             countryManager.OnProvinceOwnershipChanged -= Refresh;
         }
+
+        if (playerState != null)
+        {
+            playerState.OnPlayerCountryChanged -= HandlePlayerCountryChanged;
+        }
+    }
+
+    private void HandlePlayerCountryChanged(string tag)
+    {
+        Refresh();
     }
 
     public void Toggle()
@@ -195,6 +209,22 @@ public class CountryInfoUI : MonoBehaviour
 
         if (panel != null)
             panel.style.display = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
+    }
+
+    public void Show()
+    {
+        isVisible = true;
+
+        if (panel != null)
+            panel.style.display = DisplayStyle.Flex;
+    }
+
+    public void Hide()
+    {
+        isVisible = false;
+
+        if (panel != null)
+            panel.style.display = DisplayStyle.None;
     }
 
     public void Refresh()
@@ -217,7 +247,10 @@ public class CountryInfoUI : MonoBehaviour
         CountryData country = playerState.PlayerCountry;
 
         if (country == null)
+        {
+            ClearLabels();
             return;
+        }
 
         CountryStatsData stats = statsCalculator.Calculate(country);
 
@@ -228,20 +261,22 @@ public class CountryInfoUI : MonoBehaviour
 
         provinceCountLabel.text = $"Provinces: {stats.provinceCount}";
         populationLabel.text = $"Population: {FormatNumber(stats.totalPopulation)}";
-        recruitablePopulationLabel.text = $"Recruitable: {FormatNumber(stats.totalRecruitablePopulation)}";
 
         economyLabel.text = $"Economy Value: {FormatNumber(stats.totalEconomyValue)}";
         supplyLabel.text = $"Total Supply: {FormatNumber(stats.totalSupplyLimit)}";
         infrastructureLabel.text = $"Avg Infrastructure: {stats.averageInfrastructure}";
+    }
 
-        resourcesLabel.text =
-            $"Food {stats.totalFood} | Steel {stats.totalSteel} | Coal {stats.totalCoal} | Oil {stats.totalOil}";
-
-        rareResourcesLabel.text =
-            $"Aluminium {stats.totalAluminium} | Chromium {stats.totalChromium} | Tungsten {stats.totalTungsten} | Rubber {stats.totalRubber}";
-
-        industryLabel.text =
-            $"Civ {stats.civilianFactories} | Mil {stats.militaryFactories} | Dock {stats.dockyards} | Ref {stats.refineries}";
+    private void ClearLabels()
+    {
+        countryLabel.text = "Country: -";
+        moneyLabel.text = "Money: -";
+        manpowerLabel.text = "Manpower: -";
+        provinceCountLabel.text = "Provinces: -";
+        populationLabel.text = "Population: -";
+        economyLabel.text = "Economy Value: -";
+        supplyLabel.text = "Total Supply: -";
+        infrastructureLabel.text = "Avg Infrastructure: -";
     }
 
     private string FormatNumber(int value)

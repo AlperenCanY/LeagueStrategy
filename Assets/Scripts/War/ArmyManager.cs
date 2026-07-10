@@ -34,122 +34,106 @@ public class ArmyManager : MonoBehaviour
         TickArmyMovement();
     }
 
-    // =========================
-    // Recruitment
-    // =========================
+public bool CanRecruitArmy(int provinceId, string requesterCountryTag, out string reason)
+{
+    reason = "";
 
-    public bool CanRecruitArmy(int provinceId, string requesterCountryTag, out string reason)
+    if (provinceManager == null || countryManager == null)
     {
-        reason = "";
-
-        if (provinceManager == null || countryManager == null)
-        {
-            reason = "System missing";
-            return false;
-        }
-
-        ProvinceData province = provinceManager.GetProvinceById(provinceId);
-
-        if (province == null)
-        {
-            reason = "Province not found";
-            return false;
-        }
-
-        if (province.ownerCountry != requesterCountryTag)
-        {
-            reason = "Not your province";
-            return false;
-        }
-
-        CountryData country = countryManager.GetCountry(requesterCountryTag);
-
-        if (country == null)
-        {
-            reason = "Country not found";
-            return false;
-        }
-
-        if (province.recruitablePopulation < recruitAmount)
-        {
-            reason = "Low recruitable population";
-            return false;
-        }
-
-        if (country.manpower < manpowerCost)
-        {
-            reason = "Low manpower";
-            return false;
-        }
-
-        if (country.money < moneyCost)
-        {
-            reason = "Low money";
-            return false;
-        }
-
-        reason = "Ready";
-        return true;
+        reason = "System missing";
+        return false;
     }
 
-    public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
+    ProvinceData province = provinceManager.GetProvinceById(provinceId);
+
+    if (province == null)
     {
-        if (!CanRecruitArmy(provinceId, requesterCountryTag, out string reason))
-        {
-            Debug.Log("Recruit başarısız: " + reason);
-            return null;
-        }
-
-        ProvinceData province = provinceManager.GetProvinceById(provinceId);
-        CountryData country = countryManager.GetCountry(requesterCountryTag);
-
-        if (province == null || country == null)
-        {
-            Debug.LogError("ArmyManager: Recruit sırasında province veya country null geldi.");
-            return null;
-        }
-
-        country.manpower -= manpowerCost;
-        country.money -= moneyCost;
-        province.recruitablePopulation -= recruitAmount;
-
-        ArmyData army = CreateArmy(requesterCountryTag, provinceId, recruitAmount);
-
-        countryManager.NotifyCountriesChanged();
-
-        Debug.Log(
-            "Army oluşturuldu. ID: " + army.armyId +
-            " / Province: " + province.shapeName +
-            " / Troops: " + recruitAmount +
-            " / Cost: $" + moneyCost +
-            " / Manpower: " + manpowerCost
-        );
-
-        OnArmyCreated?.Invoke(army);
-        OnArmyChanged?.Invoke(army);
-
-        return army;
+        reason = "Province not found";
+        return false;
     }
 
-    private ArmyData CreateArmy(string ownerCountryTag, int provinceId, int troopCount)
+    if (province.ownerCountry != requesterCountryTag)
     {
-        ArmyData army = new ArmyData(
-            nextArmyId,
-            ownerCountryTag,
-            provinceId,
-            troopCount
-        );
-
-        nextArmyId++;
-        armiesById[army.armyId] = army;
-
-        return army;
+        reason = "Not your province";
+        return false;
     }
 
-    // =========================
-    // Movement
-    // =========================
+    CountryData country = countryManager.GetCountry(requesterCountryTag);
 
+    if (country == null)
+    {
+        reason = "Country not found";
+        return false;
+    }
+
+    if (province.recruitablePopulation < recruitAmount)
+    {
+        reason = "Low recruitable population";
+        return false;
+    }
+
+    if (country.manpower < manpowerCost)
+    {
+        reason = "Low manpower";
+        return false;
+    }
+
+    if (country.money < moneyCost)
+    {
+        reason = "Low money";
+        return false;
+    }
+
+    reason = "Ready";
+    return true;
+}
+
+public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
+{
+    if (!CanRecruitArmy(provinceId, requesterCountryTag, out string reason))
+    {
+        Debug.Log("Recruit başarısız: " + reason);
+        return null;
+    }
+
+    ProvinceData province = provinceManager.GetProvinceById(provinceId);
+    CountryData country = countryManager.GetCountry(requesterCountryTag);
+
+    if (province == null || country == null)
+    {
+        Debug.LogError("ArmyManager: Recruit sırasında province veya country null geldi.");
+        return null;
+    }
+
+    country.manpower -= manpowerCost;
+    country.money -= moneyCost;
+    province.recruitablePopulation -= recruitAmount;
+
+    ArmyData army = new ArmyData(
+        nextArmyId,
+        requesterCountryTag,
+        provinceId,
+        recruitAmount
+    );
+
+    nextArmyId++;
+    armiesById[army.armyId] = army;
+
+    countryManager.NotifyCountriesChanged();
+
+    Debug.Log(
+        "Army oluşturuldu. ID: " + army.armyId +
+        " / Province: " + province.shapeName +
+        " / Troops: " + recruitAmount +
+        " / Cost: $" + moneyCost +
+        " / Manpower: " + manpowerCost
+    );
+
+    OnArmyCreated?.Invoke(army);
+    OnArmyChanged?.Invoke(army);
+
+    return army;
+}
     public bool StartMoveArmy(int armyId, int targetProvinceId)
     {
         if (provinceManager == null)

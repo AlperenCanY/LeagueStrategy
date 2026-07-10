@@ -6,38 +6,32 @@ public class ProvinceInfoUI : MonoBehaviour
 {
     [Header("References")]
     public SelectionManager selectionManager;
+    public PlayerState playerState;
+    public ArmyManager armyManager;
 
     public event Action OnRecruitButtonClicked;
 
     private VisualElement panel;
 
-    private Label provinceNameLabel;
-    private Label ownerLabel;
-    private Label tagLabel;
-    private Label idLabel;
-    public PlayerState playerState;
-public ArmyManager armyManager;
-private Label recruitStatusLabel;
+    private Label titleLabel;
+    private Label idTagLabel;
 
+    private Label ownerLabel;
     private Label populationLabel;
-    private Label recruitablePopulationLabel;
+    private Label recruitableLabel;
     private Label economyLabel;
     private Label infrastructureLabel;
     private Label supplyLabel;
     private Label terrainLabel;
-
-    private Label resourcesLabel;
-    private Label factoriesLabel;
-    private Label controlLabel;
-
     private Label troopsLabel;
 
-    private Label moneyLabel;
-    private Label manpowerLabel;
-    private Label provinceCountLabel;
-    private Label dailyIncomeLabel;
-    private Label dailyManpowerLabel;
+    private Label countryMoneyLabel;
+    private Label countryManpowerLabel;
+    private Label ownedProvincesLabel;
+    private Label dailyStatsLabel;
 
+    private Label recruitStatusLabel;
+    private Label recruitCostLabel;
     private Button recruitButton;
 
     private void OnEnable()
@@ -67,71 +61,71 @@ private Label recruitStatusLabel;
 
         panel = CreatePanel();
 
-        Label title = CreateTitle("Province Info");
+        titleLabel = CreateTitle("Province");
+        idTagLabel = CreateSmallLabel("ID: - | Tag: -");
 
-        provinceNameLabel = CreateLabel("Province: -");
         ownerLabel = CreateLabel("Owner: -");
-        tagLabel = CreateLabel("Tag: -");
-        idLabel = CreateLabel("ID: -");
-
         populationLabel = CreateLabel("Population: -");
-        recruitablePopulationLabel = CreateLabel("Recruitable Population: -");
+        recruitableLabel = CreateLabel("Recruitable: -");
         economyLabel = CreateLabel("Economy: -");
         infrastructureLabel = CreateLabel("Infrastructure: -");
         supplyLabel = CreateLabel("Supply: -");
         terrainLabel = CreateLabel("Terrain: -");
-
-        resourcesLabel = CreateLabel("Resources: -");
-        factoriesLabel = CreateLabel("Factories: -");
-        controlLabel = CreateLabel("Control: -");
-
         troopsLabel = CreateLabel("Troops: -");
-        recruitStatusLabel = CreateLabel("Recruit: -");
 
-        moneyLabel = CreateLabel("Money: -");
-        manpowerLabel = CreateLabel("Manpower: -");
-        provinceCountLabel = CreateLabel("Owned Provinces: -");
-        dailyIncomeLabel = CreateLabel("Daily Income: -");
-        dailyManpowerLabel = CreateLabel("Daily Manpower: -");
+        countryMoneyLabel = CreateLabel("Money: -");
+        countryManpowerLabel = CreateLabel("Manpower: -");
+        ownedProvincesLabel = CreateLabel("Owned Provinces: -");
+        dailyStatsLabel = CreateLabel("Daily: -");
 
+        recruitStatusLabel = CreateLabel("Status: -");
+        recruitCostLabel = CreateLabel("Cost: -");
         recruitButton = CreateRecruitButton();
 
-        panel.Add(title);
+        VisualElement header = new VisualElement();
+        header.style.flexDirection = FlexDirection.Row;
+        header.style.justifyContent = Justify.SpaceBetween;
+        header.style.alignItems = Align.Center;
 
-        panel.Add(provinceNameLabel);
-        panel.Add(ownerLabel);
-        panel.Add(tagLabel);
-        panel.Add(idLabel);
+        header.Add(titleLabel);
+        header.Add(idTagLabel);
 
-        panel.Add(CreateSpacer(6));
+        VisualElement contentRow = new VisualElement();
+        contentRow.style.flexDirection = FlexDirection.Row;
+        contentRow.style.marginTop = 8;
 
-        panel.Add(populationLabel);
-        panel.Add(recruitablePopulationLabel);
-        panel.Add(economyLabel);
-        panel.Add(infrastructureLabel);
-        panel.Add(supplyLabel);
-        panel.Add(terrainLabel);
+        VisualElement provinceColumn = CreateColumn();
+        VisualElement countryColumn = CreateColumn();
+        VisualElement recruitColumn = CreateColumn();
 
-        panel.Add(CreateSpacer(6));
+        provinceColumn.Add(CreateSectionTitle("Province"));
+        provinceColumn.Add(ownerLabel);
+        provinceColumn.Add(populationLabel);
+        provinceColumn.Add(recruitableLabel);
+        provinceColumn.Add(economyLabel);
+        provinceColumn.Add(infrastructureLabel);
+        provinceColumn.Add(supplyLabel);
+        provinceColumn.Add(terrainLabel);
+        provinceColumn.Add(troopsLabel);
 
-        panel.Add(resourcesLabel);
-        panel.Add(factoriesLabel);
-        panel.Add(controlLabel);
+        countryColumn.Add(CreateSectionTitle("Owner Country"));
+        countryColumn.Add(countryMoneyLabel);
+        countryColumn.Add(countryManpowerLabel);
+        countryColumn.Add(ownedProvincesLabel);
+        countryColumn.Add(dailyStatsLabel);
 
-        panel.Add(CreateSpacer(6));
+        recruitColumn.Add(CreateSectionTitle("Recruitment"));
+        recruitColumn.Add(recruitStatusLabel);
+        recruitColumn.Add(recruitCostLabel);
+        recruitColumn.Add(recruitButton);
 
-        panel.Add(troopsLabel);
+        contentRow.Add(provinceColumn);
+        contentRow.Add(countryColumn);
+        contentRow.Add(recruitColumn);
 
-        panel.Add(CreateSpacer(6));
-
-        panel.Add(moneyLabel);
-        panel.Add(manpowerLabel);
-        panel.Add(provinceCountLabel);
-        panel.Add(dailyIncomeLabel);
-        panel.Add(dailyManpowerLabel);
-
-        panel.Add(recruitStatusLabel);
-panel.Add(recruitButton);
+        panel.Add(header);
+        panel.Add(CreateDivider());
+        panel.Add(contentRow);
 
         root.Add(panel);
     }
@@ -141,42 +135,122 @@ panel.Add(recruitButton);
         VisualElement element = new VisualElement();
 
         element.style.position = Position.Absolute;
-        element.style.right = 20;
-        element.style.top = 20;
-        element.style.width = 340;
+element.style.right = 12;
+element.style.bottom = 12;
 
-        element.style.paddingTop = 12;
-        element.style.paddingBottom = 12;
-        element.style.paddingLeft = 12;
-        element.style.paddingRight = 12;
+element.style.width = 560;
+element.style.height = 185;
 
-        element.style.backgroundColor = new Color(0f, 0f, 0f, 0.72f);
+element.style.paddingTop = 8;
+element.style.paddingBottom = 8;
+element.style.paddingLeft = 10;
+element.style.paddingRight = 10;
+
+        element.style.backgroundColor = new Color(0f, 0f, 0f, 0.78f);
 
         return element;
     }
 
-    private Label CreateTitle(string text)
+private VisualElement CreateColumn()
+{
+    VisualElement column = new VisualElement();
+    column.style.flexGrow = 1;
+    column.style.width = Length.Percent(33);
+    column.style.paddingRight = 8;
+    return column;
+}
+private Label CreateTitle(string text)
+{
+    Label label = new Label(text);
+    label.style.fontSize = 15;
+    label.style.color = Color.white;
+    label.style.unityFontStyleAndWeight = FontStyle.Bold;
+    label.style.whiteSpace = WhiteSpace.NoWrap;
+    return label;
+}
+
+private Label CreateSectionTitle(string text)
+{
+    Label label = new Label(text);
+    label.style.fontSize = 11;
+    label.style.color = new Color(1f, 0.78f, 0.28f);
+    label.style.unityFontStyleAndWeight = FontStyle.Bold;
+    label.style.marginBottom = 3;
+    label.style.whiteSpace = WhiteSpace.NoWrap;
+    return label;
+}
+
+private Label CreateLabel(string text)
+{
+    Label label = new Label(text);
+    label.style.fontSize = 10;
+    label.style.color = Color.white;
+    label.style.marginBottom = 2;
+    label.style.whiteSpace = WhiteSpace.NoWrap;
+    return label;
+}
+
+private Label CreateSmallLabel(string text)
+{
+    Label label = new Label(text);
+    label.style.fontSize = 9;
+    label.style.color = new Color(1f, 1f, 1f, 0.85f);
+    label.style.whiteSpace = WhiteSpace.NoWrap;
+    return label;
+}
+
+    private VisualElement CreateDivider()
     {
-        Label label = new Label(text);
+        VisualElement divider = new VisualElement();
 
-        label.style.fontSize = 20;
-        label.style.color = Color.white;
-        label.style.unityFontStyleAndWeight = FontStyle.Bold;
-        label.style.marginBottom = 10;
+        divider.style.height = 1;
+        divider.style.marginTop = 8;
+        divider.style.marginBottom = 4;
+        divider.style.backgroundColor = new Color(1f, 1f, 1f, 0.22f);
 
-        return label;
+        return divider;
     }
 
-    private Label CreateLabel(string text)
+private Button CreateRecruitButton()
+{
+    Button button = new Button();
+    button.text = "Recruit";
+    button.style.height = 24;
+    button.style.marginTop = 6;
+    button.style.fontSize = 10;
+    button.clicked += HandleRecruitClicked;
+    return button;
+}
+
+    private void SubscribeEvents()
     {
-        Label label = new Label(text);
+        if (selectionManager != null)
+            selectionManager.OnProvinceSelected += ShowSelection;
+    }
 
-        label.style.fontSize = 15;
-        label.style.color = Color.white;
-        label.style.marginBottom = 4;
-        label.style.whiteSpace = WhiteSpace.Normal;
+    private void UnsubscribeEvents()
+    {
+        if (selectionManager != null)
+            selectionManager.OnProvinceSelected -= ShowSelection;
 
-        return label;
+        if (recruitButton != null)
+            recruitButton.clicked -= HandleRecruitClicked;
+    }
+
+    private void ShowSelection(ProvinceSelection selection)
+    {
+        if (selection == null || selection.province == null)
+        {
+            Hide();
+            return;
+        }
+
+        ShowProvince(selection.province, selection.ownerCountry);
+    }
+
+    private void HandleRecruitClicked()
+    {
+        OnRecruitButtonClicked?.Invoke();
     }
 
     private VisualElement CreateSpacer(int height)
@@ -247,112 +321,98 @@ panel.Add(recruitButton);
 
         UpdateProvinceLabels(province);
         UpdateCountryLabels(ownerCountry);
+        UpdateRecruitButton(province);
 
         Show();
     }
 
     private void UpdateProvinceLabels(ProvinceData province)
     {
-        provinceNameLabel.text = $"Province: {province.shapeName}";
-        tagLabel.text = $"Tag: {province.ownerCountry}";
-        idLabel.text = $"ID: {province.prov_id}";
+        titleLabel.text = province.shapeName;
+        idTagLabel.text = "ID: " + province.prov_id + " | Tag: " + province.ownerCountry;
 
-        populationLabel.text = $"Population: {province.population}";
-        recruitablePopulationLabel.text = $"Recruitable Population: {province.recruitablePopulation}";
-        economyLabel.text = $"Economy: {province.economyValue}";
-        infrastructureLabel.text = $"Infrastructure: {province.infrastructure}";
-        supplyLabel.text = $"Supply: {province.supplyLimit}";
-        terrainLabel.text = $"Terrain: {province.terrainType}";
-
-        resourcesLabel.text =
-            $"Resources: Food {province.food} | Steel {province.steel} | Coal {province.coal} | Oil {province.oil}";
-
-        factoriesLabel.text =
-            $"Factories: Civ {province.civilianFactories} | Mil {province.militaryFactories} | Dock {province.dockyards} | Ref {province.refineries}";
-
-        controlLabel.text =
-            $"Control: Resistance {province.resistance}% | Compliance {province.compliance}%";
-
-        troopsLabel.text = $"Troops: {province.stationedTroops}";
-        UpdateRecruitButton(province);
+        ownerLabel.text = "Owner: " + province.ownerCountry;
+        populationLabel.text = "Population: " + FormatNumber(province.population);
+        recruitableLabel.text = "Recruitable: " + FormatNumber(province.recruitablePopulation);
+        economyLabel.text = "Economy: " + province.economyValue;
+        infrastructureLabel.text = "Infrastructure: " + province.infrastructure;
+        supplyLabel.text = "Supply: " + FormatNumber(province.supplyLimit);
+        terrainLabel.text = "Terrain: " + province.terrainType;
+        troopsLabel.text = "Troops: " + FormatNumber(province.stationedTroops);
     }
 
     private void UpdateCountryLabels(CountryData ownerCountry)
     {
         if (ownerCountry == null)
         {
-            ownerLabel.text = "Owner: Unknown";
-            moneyLabel.text = "Money: -";
-            manpowerLabel.text = "Manpower: -";
-            provinceCountLabel.text = "Owned Provinces: -";
-            dailyIncomeLabel.text = "Daily Income: -";
-            dailyManpowerLabel.text = "Daily Manpower: -";
+            countryMoneyLabel.text = "Money: -";
+            countryManpowerLabel.text = "Manpower: -";
+            ownedProvincesLabel.text = "Owned Provinces: -";
+            dailyStatsLabel.text = "Daily: -";
             return;
         }
 
-        ownerLabel.text = $"Owner: {ownerCountry.countryName}";
-        moneyLabel.text = $"Money: {ownerCountry.money}";
-        manpowerLabel.text = $"Manpower: {ownerCountry.manpower}";
-        provinceCountLabel.text = $"Owned Provinces: {ownerCountry.ProvinceCount}";
-        dailyIncomeLabel.text = $"Daily Income: {ownerCountry.dailyIncome}";
-        dailyManpowerLabel.text = $"Daily Manpower: {ownerCountry.dailyManpowerGain}";
+        countryMoneyLabel.text = "Money: " + FormatNumber(ownerCountry.money);
+        countryManpowerLabel.text = "Manpower: " + FormatNumber(ownerCountry.manpower);
+        ownedProvincesLabel.text = "Owned Provinces: " + ownerCountry.ProvinceCount;
+
+        dailyStatsLabel.text =
+            "Daily: +" + ownerCountry.dailyIncome +
+            " money | +" + ownerCountry.dailyManpowerGain + " MP";
+    }
+
+    private void UpdateRecruitButton(ProvinceData province)
+    {
+        if (recruitButton == null || recruitStatusLabel == null || recruitCostLabel == null)
+            return;
+
+        if (province == null)
+        {
+            recruitButton.SetEnabled(false);
+            recruitStatusLabel.text = "Status: -";
+            recruitCostLabel.text = "Cost: -";
+            return;
+        }
+
+        if (armyManager == null || playerState == null)
+        {
+            recruitButton.SetEnabled(false);
+            recruitStatusLabel.text = "Status: System not linked";
+            recruitCostLabel.text = "Cost: -";
+            return;
+        }
+
+        bool canRecruit = armyManager.CanRecruitArmy(
+            province.prov_id,
+            playerState.PlayerCountryTag,
+            out string reason
+        );
+
+        recruitStatusLabel.text = canRecruit ? "Status: Ready" : "Status: " + reason;
+
+        recruitCostLabel.text =
+            "Cost: $" + armyManager.moneyCost +
+            " | MP " + armyManager.manpowerCost +
+            " | +" + armyManager.recruitAmount + " troops";
+
+        recruitButton.text = "Recruit " + armyManager.recruitAmount;
+        recruitButton.SetEnabled(canRecruit);
     }
 
     private void Show()
     {
         if (panel != null)
-        {
             panel.style.display = DisplayStyle.Flex;
-        }
-    }
-private void UpdateRecruitButton(ProvinceData province)
-{
-    if (recruitButton == null || recruitStatusLabel == null)
-        return;
-
-    if (province == null)
-    {
-        recruitButton.SetEnabled(false);
-        recruitStatusLabel.text = "Recruit: -";
-        return;
     }
 
-    if (armyManager == null || playerState == null)
-    {
-        recruitButton.SetEnabled(true);
-        recruitStatusLabel.text = "Recruit: System not linked";
-        return;
-    }
-
-    string playerTag = playerState.PlayerCountryTag;
-
-    bool canRecruit = armyManager.CanRecruitArmy(
-        province.prov_id,
-        playerTag,
-        out string reason
-    );
-
-    recruitButton.text =
-        "Recruit " + armyManager.recruitAmount +
-        " | $" + armyManager.moneyCost +
-        " | MP " + armyManager.manpowerCost;
-
-    recruitButton.SetEnabled(canRecruit);
-
-    if (canRecruit)
-    {
-        recruitStatusLabel.text = "Recruit: Ready";
-    }
-    else
-    {
-        recruitStatusLabel.text = "Recruit: " + reason;
-    }
-}
     private void Hide()
     {
         if (panel != null)
-        {
             panel.style.display = DisplayStyle.None;
-        }
+    }
+
+    private string FormatNumber(int value)
+    {
+        return value.ToString("N0");
     }
 }

@@ -3,117 +3,176 @@ using UnityEngine.UIElements;
 
 public class TopBarUI : MonoBehaviour
 {
+    [Header("References")]
     public TimeManager timeManager;
     public CountryManager countryManager;
     public PlayerState playerState;
+
+    [Header("Debug")]
+    public bool showCountrySwitchButtons = true;
+
+    private VisualElement topBar;
 
     private Label dateLabel;
     private Label countryLabel;
     private Label moneyLabel;
     private Label manpowerLabel;
     private Label speedLabel;
-    private Label pauseLabel;
+    private Label statusLabel;
+
+    private Button turButton;
+    private Button grcButton;
+    private Button bgrButton;
 
     private void OnEnable()
+    {
+        BuildUI();
+        SubscribeEvents();
+        Refresh();
+    }
+
+    private void OnDisable()
+    {
+        UnsubscribeEvents();
+    }
+
+    private void BuildUI()
     {
         UIDocument document = GetComponent<UIDocument>();
 
         if (document == null)
         {
-            Debug.LogError("TopBarUI için UIDocument component eksik.");
+            Debug.LogError("TopBarUI: UIDocument component eksik.");
             return;
         }
 
         VisualElement root = document.rootVisualElement;
+        root.Clear();
 
-        VisualElement topBar = new VisualElement();
-        topBar.style.position = Position.Absolute;
-        topBar.style.left = 0;
-        topBar.style.top = 0;
-        topBar.style.right = 0;
-        topBar.style.height = 42;
-        topBar.style.backgroundColor = new Color(0f, 0f, 0f, 0.70f);
-        topBar.style.flexDirection = FlexDirection.Row;
-        topBar.style.alignItems = Align.Center;
-        topBar.style.paddingLeft = 14;
-        topBar.style.paddingRight = 14;
+        topBar = CreateTopBar();
 
         dateLabel = CreateLabel("Date: -");
         countryLabel = CreateLabel("Country: -");
         moneyLabel = CreateLabel("Money: -");
         manpowerLabel = CreateLabel("Manpower: -");
         speedLabel = CreateLabel("Speed: -");
-        pauseLabel = CreateLabel("Status: -");
+        statusLabel = CreateLabel("Status: -");
 
         topBar.Add(dateLabel);
         topBar.Add(countryLabel);
         topBar.Add(moneyLabel);
         topBar.Add(manpowerLabel);
         topBar.Add(speedLabel);
-        topBar.Add(pauseLabel);
-Button turButton = new Button(() =>
-{
-    playerState.SetPlayerCountry("TUR");
-    Refresh();
-});
+        topBar.Add(statusLabel);
 
-turButton.text = "TUR";
+        if (showCountrySwitchButtons)
+        {
+            topBar.Add(CreateFlexibleSpace());
 
-Button grcButton = new Button(() =>
-{
-    playerState.SetPlayerCountry("GRC");
-    Refresh();
-});
+            turButton = CreateCountryButton("TUR");
+            grcButton = CreateCountryButton("GRC");
+            bgrButton = CreateCountryButton("BGR");
 
-grcButton.text = "GRC";
+            topBar.Add(turButton);
+            topBar.Add(grcButton);
+            topBar.Add(bgrButton);
+        }
 
-Button bgrButton = new Button(() =>
-{
-    playerState.SetPlayerCountry("BGR");
-    Refresh();
-});
-
-bgrButton.text = "BGR";
-
-topBar.Add(turButton);
-topBar.Add(grcButton);
-topBar.Add(bgrButton);
         root.Add(topBar);
-
-        if (timeManager != null)
-            timeManager.OnDayPassed += HandleDayPassed;
-            if (timeManager != null)
-    timeManager.OnTimeStateChanged += Refresh;
-
-       if (countryManager != null)
-    countryManager.OnCountriesChanged += Refresh;
-
-if (playerState != null)
-    playerState.OnPlayerCountryChanged += HandlePlayerCountryChanged;
-
-        Refresh();
     }
 
-    private void OnDisable()
+    private VisualElement CreateTopBar()
     {
-        if (timeManager != null)
-            timeManager.OnDayPassed -= HandleDayPassed;
+        VisualElement element = new VisualElement();
 
-        if (countryManager != null)
-            countryManager.OnCountriesChanged -= Refresh;
-            if (playerState != null)
-    playerState.OnPlayerCountryChanged -= HandlePlayerCountryChanged;
-            if (timeManager != null)
-    timeManager.OnTimeStateChanged -= Refresh;
+        element.style.position = Position.Absolute;
+        element.style.left = 0;
+        element.style.top = 0;
+        element.style.right = 0;
+        element.style.height = 42;
+
+        element.style.backgroundColor = new Color(0f, 0f, 0f, 0.72f);
+
+        element.style.flexDirection = FlexDirection.Row;
+        element.style.alignItems = Align.Center;
+
+        element.style.paddingLeft = 14;
+        element.style.paddingRight = 14;
+
+        return element;
     }
 
     private Label CreateLabel(string text)
     {
         Label label = new Label(text);
+
         label.style.color = Color.white;
         label.style.fontSize = 15;
         label.style.marginRight = 24;
+        label.style.unityFontStyleAndWeight = FontStyle.Bold;
+        label.style.whiteSpace = WhiteSpace.NoWrap;
+
         return label;
+    }
+
+    private Button CreateCountryButton(string countryTag)
+    {
+        Button button = new Button(() => ChangePlayerCountry(countryTag));
+
+        button.text = countryTag;
+        button.style.width = 52;
+        button.style.height = 28;
+        button.style.marginLeft = 6;
+        button.style.fontSize = 13;
+
+        return button;
+    }
+
+    private VisualElement CreateFlexibleSpace()
+    {
+        VisualElement space = new VisualElement();
+        space.style.flexGrow = 1;
+        return space;
+    }
+
+    private void SubscribeEvents()
+    {
+        if (timeManager != null)
+        {
+            timeManager.OnDayPassed += HandleDayPassed;
+            timeManager.OnTimeStateChanged += Refresh;
+        }
+
+        if (countryManager != null)
+        {
+            countryManager.OnCountriesChanged += Refresh;
+            countryManager.OnProvinceOwnershipChanged += Refresh;
+        }
+
+        if (playerState != null)
+        {
+            playerState.OnPlayerCountryChanged += HandlePlayerCountryChanged;
+        }
+    }
+
+    private void UnsubscribeEvents()
+    {
+        if (timeManager != null)
+        {
+            timeManager.OnDayPassed -= HandleDayPassed;
+            timeManager.OnTimeStateChanged -= Refresh;
+        }
+
+        if (countryManager != null)
+        {
+            countryManager.OnCountriesChanged -= Refresh;
+            countryManager.OnProvinceOwnershipChanged -= Refresh;
+        }
+
+        if (playerState != null)
+        {
+            playerState.OnPlayerCountryChanged -= HandlePlayerCountryChanged;
+        }
     }
 
     private void HandleDayPassed(int day, int month, int year)
@@ -121,15 +180,47 @@ if (playerState != null)
         Refresh();
     }
 
-    public void Refresh()
+    private void HandlePlayerCountryChanged(string tag)
     {
-        if (timeManager != null)
+        Refresh();
+    }
+
+    private void ChangePlayerCountry(string countryTag)
+    {
+        if (playerState == null)
         {
-            dateLabel.text = "Date: " + timeManager.GetDateText();
-            speedLabel.text = "Speed: " + timeManager.secondsPerDay.ToString("0.00") + "s/day";
-            pauseLabel.text = timeManager.isPaused ? "Status: Paused" : "Status: Playing";
+            Debug.LogWarning("TopBarUI: PlayerState atanmadı.");
+            return;
         }
 
+        playerState.SetPlayerCountry(countryTag);
+        Refresh();
+    }
+
+    public void Refresh()
+    {
+        RefreshTimeLabels();
+        RefreshCountryLabels();
+        RefreshCountryButtons();
+    }
+
+    private void RefreshTimeLabels()
+    {
+        if (timeManager == null)
+        {
+            dateLabel.text = "Date: -";
+            speedLabel.text = "Speed: -";
+            statusLabel.text = "Status: -";
+            return;
+        }
+
+        dateLabel.text = "Date: " + timeManager.GetDateText();
+        speedLabel.text = "Speed: " + timeManager.GetSpeedText();
+        statusLabel.text = timeManager.isPaused ? "Status: Paused" : "Status: Playing";
+    }
+
+    private void RefreshCountryLabels()
+    {
         CountryData playerCountry = null;
 
         if (playerState != null)
@@ -143,12 +234,42 @@ if (playerState != null)
             return;
         }
 
-        countryLabel.text = "Country: " + playerCountry.countryName;
-        moneyLabel.text = "Money: " + playerCountry.money;
-        manpowerLabel.text = "Manpower: " + playerCountry.manpower;
+        countryLabel.text = "Country: " + playerCountry.countryName + " (" + playerCountry.tag + ")";
+        moneyLabel.text = "Money: " + FormatNumber(playerCountry.money);
+        manpowerLabel.text = "Manpower: " + FormatNumber(playerCountry.manpower);
     }
-    private void HandlePlayerCountryChanged(string tag)
-{
-    Refresh();
-}
+
+    private void RefreshCountryButtons()
+    {
+        if (!showCountrySwitchButtons || playerState == null)
+            return;
+
+        string selectedTag = playerState.PlayerCountryTag;
+
+        SetCountryButtonSelected(turButton, selectedTag == "TUR");
+        SetCountryButtonSelected(grcButton, selectedTag == "GRC");
+        SetCountryButtonSelected(bgrButton, selectedTag == "BGR");
+    }
+
+    private void SetCountryButtonSelected(Button button, bool selected)
+    {
+        if (button == null)
+            return;
+
+        if (selected)
+        {
+            button.style.backgroundColor = new Color(1f, 0.75f, 0.25f, 1f);
+            button.style.color = Color.black;
+        }
+        else
+        {
+            button.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f, 1f);
+            button.style.color = Color.white;
+        }
+    }
+
+    private string FormatNumber(int value)
+    {
+        return value.ToString("N0");
+    }
 }

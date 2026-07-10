@@ -150,6 +150,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProvinceInfoUI
   selectionManager: {fileID: 1553334991}
+  playerState: {fileID: 1553335002}
+  armyManager: {fileID: 1553335000}
 --- !u!114 &99212512
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -536,6 +538,7 @@ GameObject:
   - component: {fileID: 1553334998}
   - component: {fileID: 1553334997}
   - component: {fileID: 1553335003}
+  - component: {fileID: 1553335004}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -662,8 +665,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EconomyManager
   timeManager: {fileID: 1553334995}
   countryManager: {fileID: 1553334992}
-  moneyPerProvincePerDay: 2
-  manpowerPerProvincePerDay: 5
+  economyValueDivisor: 5
+  moneyPerCivilianFactory: 4
+  moneyPerRefinery: 2
+  maxInfrastructureIncomeBonus: 0.3
+  recruitablePopulationDivisor: 120000
+  minimumManpowerGain: 1
 --- !u!114 &1553334995
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -789,7 +796,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d3153122b308044dbeafe52154b0f55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerState
-  countryManager: {fileID: 1553334992}
   playerCountryTag: TUR
 --- !u!114 &1553335003
 MonoBehaviour:
@@ -807,6 +813,91 @@ MonoBehaviour:
   provinceManager: {fileID: 1553334990}
   countryManager: {fileID: 1553334992}
   selectionManager: {fileID: 1553334991}
+  winnerLossRatioFromLoserPower: 0.5
+--- !u!114 &1553335004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1553334983}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b3ecf4bc2445a04b8c809556ddbf7a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CountryStatsCalculator
+  provinceManager: {fileID: 1553334990}
+--- !u!1 &1643861071
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1643861074}
+  - component: {fileID: 1643861073}
+  - component: {fileID: 1643861072}
+  m_Layer: 5
+  m_Name: CountryInfoUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1643861072
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1643861071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3936d9c6209522e41b28bcbcd676e9c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CountryInfoUI
+  playerState: {fileID: 1553335002}
+  countryManager: {fileID: 1553334992}
+  statsCalculator: {fileID: 1553335004}
+--- !u!114 &1643861073
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1643861071}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: caf6639df23725d4f868b702e09854b6, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &1643861074
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1643861071}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2020764930
 GameObject:
   m_ObjectHideFlags: 0
@@ -888,3 +979,4 @@ SceneRoots:
   - {fileID: 99212513}
   - {fileID: 2020764933}
   - {fileID: 611543791}
+  - {fileID: 1643861074}
