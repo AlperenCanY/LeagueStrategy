@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ArmyManager : MonoBehaviour
 {
+    [Header("References")]
     public CountryManager countryManager;
     public ProvinceManager provinceManager;
     public TimeManager timeManager;
@@ -18,10 +19,10 @@ public class ArmyManager : MonoBehaviour
 
     private int nextArmyId = 1;
 
-    private Dictionary<int, ArmyData> armiesById = new Dictionary<int, ArmyData>();
+    private readonly Dictionary<int, ArmyData> armiesById = new Dictionary<int, ArmyData>();
 
-    private List<ArmyData> tickBuffer = new List<ArmyData>();
-    private List<ArmyData> arrivedBuffer = new List<ArmyData>();
+    private readonly List<ArmyData> tickBuffer = new List<ArmyData>();
+    private readonly List<ArmyData> arrivedBuffer = new List<ArmyData>();
 
     public event Action<ArmyData> OnArmyCreated;
     public event Action<ArmyData> OnArmyChanged;
@@ -135,6 +136,12 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
 }
     public bool StartMoveArmy(int armyId, int targetProvinceId)
     {
+        if (provinceManager == null)
+        {
+            Debug.LogError("ArmyManager: ProvinceManager atanmadı.");
+            return false;
+        }
+
         ArmyData army = GetArmy(armyId);
 
         if (army == null)
@@ -143,11 +150,17 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
             return false;
         }
 
+        if (army.isMoving)
+        {
+            Debug.Log("Army zaten hareket ediyor.");
+            return false;
+        }
+
         ProvinceData targetProvince = provinceManager.GetProvinceById(targetProvinceId);
 
         if (targetProvince == null)
         {
-            Debug.LogWarning("ArmyManager: Hedef province bulunamadı.");
+            Debug.LogWarning("ArmyManager: Hedef province bulunamadı. ID: " + targetProvinceId);
             return false;
         }
 
@@ -157,6 +170,17 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
             return false;
         }
 
+        StartMovement(army, targetProvinceId);
+
+        Debug.Log("Army " + army.armyId + " hareket ediyor -> " + targetProvince.shapeName);
+
+        OnArmyChanged?.Invoke(army);
+
+        return true;
+    }
+
+    private void StartMovement(ArmyData army, int targetProvinceId)
+    {
         int moveDays = Mathf.Max(1, defaultMovementDays);
 
         army.isMoving = true;
@@ -165,12 +189,6 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
         army.movementDaysTotal = moveDays;
         army.movementDaysRemaining = moveDays;
         army.movementProgress = 0f;
-
-        Debug.Log("Army " + army.armyId + " hareket ediyor -> " + targetProvince.shapeName);
-
-        OnArmyChanged?.Invoke(army);
-
-        return true;
     }
 
     private void TickArmyMovement()
@@ -185,7 +203,9 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
         arrivedBuffer.Clear();
 
         foreach (ArmyData army in armiesById.Values)
+        {
             tickBuffer.Add(army);
+        }
 
         foreach (ArmyData army in tickBuffer)
         {
@@ -198,29 +218,67 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
             if (!army.isMoving)
                 continue;
 
-            int oldRemainingDays = army.movementDaysRemaining;
-
-            float totalMoveSeconds = Mathf.Max(0.01f, timeManager.secondsPerDay * army.movementDaysTotal);
-
-            army.movementProgress += Time.deltaTime / totalMoveSeconds;
-            army.movementProgress = Mathf.Clamp01(army.movementProgress);
-
-            army.movementDaysRemaining = Mathf.Max(
-                0,
-                Mathf.CeilToInt((1f - army.movementProgress) * army.movementDaysTotal)
-            );
-
-            if (army.movementProgress >= 1f)
-            {
-                FinishMovement(army);
-                arrivedBuffer.Add(army);
-                continue;
-            }
-
-            if (army.movementDaysRemaining != oldRemainingDays)
-                OnArmyChanged?.Invoke(army);
+            TickSingleArmyMovement(army);
         }
 
+        FireArrivedEvents();
+    }
+
+    private void TickSingleArmyMovement(ArmyData army)
+    {
+        int oldRemainingDays = army.movementDaysRemaining;
+
+        float totalMoveSeconds = Mathf.Max(
+            0.01f,
+            timeManager.secondsPerDay * army.movementDaysTotal
+        );
+
+        army.movementProgress += Time.deltaTime / totalMoveSeconds;
+        army.movementProgress = Mathf.Clamp01(army.movementProgress);
+
+        army.movementDaysRemaining = Mathf.Max(
+            0,
+            Mathf.CeilToInt((1f - army.movementProgress) * army.movementDaysTotal)
+        );
+
+        if (army.movementProgress >= 1f)
+        {
+            FinishMovement(army);
+            arrivedBuffer.Add(army);
+            return;
+        }
+
+        if (army.movementDaysRemaining != oldRemainingDays)
+        {
+            OnArmyChanged?.Invoke(army);
+        }
+    }
+
+    private void FinishMovement(ArmyData army)
+    {
+        army.currentProvinceId = army.targetProvinceId;
+        army.sourceProvinceId = army.currentProvinceId;
+        army.targetProvinceId = army.currentProvinceId;
+
+        army.isMoving = false;
+        army.movementDaysTotal = 0;
+        army.movementDaysRemaining = 0;
+        army.movementProgress = 1f;
+
+        ProvinceData province = provinceManager != null
+            ? provinceManager.GetProvinceById(army.currentProvinceId)
+            : null;
+
+        Debug.Log(
+            "Army " + army.armyId +
+            " vardı: " + (province != null ? province.shapeName : "Unknown")
+        );
+
+        OnArmyChanged?.Invoke(army);
+    }
+
+    private void FireArrivedEvents()
+    {
         foreach (ArmyData arrivedArmy in arrivedBuffer)
         {
             if (arrivedArmy == null)
@@ -233,21 +291,27 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
         }
     }
 
-    private void FinishMovement(ArmyData army)
+    // =========================
+    // Army State
+    // =========================
+
+    public bool SetArmyTroopCount(int armyId, int newTroopCount)
     {
-        army.currentProvinceId = army.targetProvinceId;
-        army.sourceProvinceId = army.currentProvinceId;
+        ArmyData army = GetArmy(armyId);
 
-        army.isMoving = false;
-        army.movementDaysTotal = 0;
-        army.movementDaysRemaining = 0;
-        army.movementProgress = 1f;
+        if (army == null)
+            return false;
 
-        ProvinceData province = provinceManager.GetProvinceById(army.currentProvinceId);
+        army.troopCount = Mathf.Max(0, newTroopCount);
 
-        Debug.Log("Army " + army.armyId + " vardı: " + (province != null ? province.shapeName : "Unknown"));
+        if (army.troopCount <= 0)
+        {
+            DestroyArmy(armyId);
+            return true;
+        }
 
         OnArmyChanged?.Invoke(army);
+        return true;
     }
 
     public bool DestroyArmy(int armyId)
@@ -271,23 +335,19 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
         return true;
     }
 
-    public bool SetArmyTroopCount(int armyId, int newTroopCount)
+    // =========================
+    // Queries
+    // =========================
+
+    public ArmyData GetArmy(int armyId)
     {
-        ArmyData army = GetArmy(armyId);
+        armiesById.TryGetValue(armyId, out ArmyData army);
+        return army;
+    }
 
-        if (army == null)
-            return false;
-
-        army.troopCount = Mathf.Max(0, newTroopCount);
-
-        if (army.troopCount <= 0)
-        {
-            DestroyArmy(armyId);
-            return true;
-        }
-
-        OnArmyChanged?.Invoke(army);
-        return true;
+    public IEnumerable<ArmyData> GetAllArmies()
+    {
+        return armiesById.Values;
     }
 
     public ArmyData GetFirstEnemyArmyInProvince(int provinceId, string requesterCountryTag)
@@ -313,16 +373,5 @@ public ArmyData RecruitArmy(int provinceId, string requesterCountryTag)
         }
 
         return null;
-    }
-
-    public ArmyData GetArmy(int armyId)
-    {
-        armiesById.TryGetValue(armyId, out ArmyData army);
-        return army;
-    }
-
-    public IEnumerable<ArmyData> GetAllArmies()
-    {
-        return armiesById.Values;
     }
 }

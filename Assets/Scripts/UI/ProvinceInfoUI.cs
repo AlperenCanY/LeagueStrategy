@@ -253,6 +253,64 @@ private Button CreateRecruitButton()
         OnRecruitButtonClicked?.Invoke();
     }
 
+    private VisualElement CreateSpacer(int height)
+    {
+        VisualElement spacer = new VisualElement();
+        spacer.style.height = height;
+        return spacer;
+    }
+
+    private Button CreateRecruitButton()
+    {
+        Button button = new Button();
+        button.text = "Recruit 1000";
+
+        button.style.marginTop = 10;
+        button.style.height = 32;
+        button.style.fontSize = 15;
+
+        button.clicked += HandleRecruitClicked;
+
+        return button;
+    }
+
+    private void SubscribeEvents()
+    {
+        if (selectionManager != null)
+        {
+            selectionManager.OnProvinceSelected += ShowSelection;
+        }
+    }
+
+    private void UnsubscribeEvents()
+    {
+        if (selectionManager != null)
+        {
+            selectionManager.OnProvinceSelected -= ShowSelection;
+        }
+
+        if (recruitButton != null)
+        {
+            recruitButton.clicked -= HandleRecruitClicked;
+        }
+    }
+
+    private void HandleRecruitClicked()
+    {
+        OnRecruitButtonClicked?.Invoke();
+    }
+
+    private void ShowSelection(ProvinceSelection selection)
+    {
+        if (selection == null || selection.province == null)
+        {
+            Hide();
+            return;
+        }
+
+        ShowProvince(selection.province, selection.ownerCountry);
+    }
+
     public void ShowProvince(ProvinceData province, CountryData ownerCountry)
     {
         if (province == null)

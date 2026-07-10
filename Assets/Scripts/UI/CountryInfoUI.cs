@@ -11,13 +11,21 @@ public class CountryInfoUI : MonoBehaviour
     private VisualElement panel;
 
     private Label countryLabel;
+
     private Label moneyLabel;
     private Label manpowerLabel;
+
     private Label provinceCountLabel;
     private Label populationLabel;
+    private Label recruitablePopulationLabel;
+
     private Label economyLabel;
     private Label supplyLabel;
     private Label infrastructureLabel;
+
+    private Label resourcesLabel;
+    private Label rareResourcesLabel;
+    private Label industryLabel;
 
     private bool isVisible = true;
 
@@ -52,13 +60,19 @@ public class CountryInfoUI : MonoBehaviour
         Label title = CreateTitle("Country Info");
 
         countryLabel = CreateLabel("Country: -");
+
         moneyLabel = CreateLabel("Money: -");
         manpowerLabel = CreateLabel("Manpower: -");
+
         provinceCountLabel = CreateLabel("Provinces: -");
         populationLabel = CreateLabel("Population: -");
         economyLabel = CreateLabel("Economy Value: -");
         supplyLabel = CreateLabel("Total Supply: -");
         infrastructureLabel = CreateLabel("Avg Infrastructure: -");
+
+        resourcesLabel = CreateLabel("Resources: -");
+        rareResourcesLabel = CreateLabel("Rare Resources: -");
+        industryLabel = CreateLabel("Industry: -");
 
         panel.Add(title);
         panel.Add(countryLabel);
@@ -78,6 +92,15 @@ public class CountryInfoUI : MonoBehaviour
         panel.Add(economyLabel);
         panel.Add(supplyLabel);
         panel.Add(infrastructureLabel);
+
+        panel.Add(CreateSpacer(6));
+        panel.Add(CreateSectionTitle("Resources"));
+        panel.Add(resourcesLabel);
+        panel.Add(rareResourcesLabel);
+
+        panel.Add(CreateSpacer(6));
+        panel.Add(CreateSectionTitle("Industry"));
+        panel.Add(industryLabel);
 
         root.Add(panel);
     }
